@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define MUTATION 0.05
+#define MUTATION 5
 
 typedef struct {
 	unsigned char values[4];
@@ -39,24 +39,58 @@ float evaluate( Individual ind )
 	return (float)score/32;
 }
 
-void evolve( Individual *pop )
+void new_pop( Individual most_fit, Individual *pop )
 {
-	Individual most_fit;
-	most_fit.eval = 0;
+	int random;
 
 	for ( int i = 0 ; i < 50 ; i++ )
 	{
-		pop[ i ].eval = evaluate( pop[ i ] );
-
-		if ( most_fit.eval < pop[ i ].eval )
-		{
-			most_fit = pop[ i ];
-		}
+		pop[ i ] = most_fit;
 	}
 
-	printf( "Most fit bitstring : " );
-	print_ind( most_fit );
-	printf( " %.3f\n", most_fit.eval );
+	for ( int i = 1 ; i < 50 ; i++ )
+	{
+		for ( int j = 0 ; j < 4; j++)
+		{
+			for ( int k = 0; k < 8; k++ )
+			{
+				random = rand() % 100;
+				if( random < MUTATION)
+				{
+					pop[ i ].values[ j ] = pop[ i ].values[ j ] ^ (1 << k);
+				}
+			}
+		}
+	}
+}
+
+void evolve( Individual *pop )
+{
+	int iteration = 0;
+	Individual most_fit;
+	most_fit.eval = 0;
+
+	while( most_fit.eval != 1 )
+	{
+
+		for ( int i = 0 ; i < 50 ; i++ )
+		{
+			pop[ i ].eval = evaluate( pop[ i ] );
+
+			if ( most_fit.eval < pop[ i ].eval )
+			{
+				most_fit = pop[ i ];
+			}
+		}
+
+		printf( "Most fit bitstring %2d : ", iteration );
+		print_ind( most_fit );
+		printf( " %.3f\n", most_fit.eval );
+
+		iteration++;
+
+		new_pop( most_fit, pop );
+	}
 }
 
 int main()
