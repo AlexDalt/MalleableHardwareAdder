@@ -3,8 +3,9 @@
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "simulator.h"
 
-#define MUTATION 0.01f
+#define MUTATION 0.003f
 
 typedef struct {
 	unsigned char values[4];
@@ -133,7 +134,11 @@ int main()
 		pop[ i ].values[ 3 ] = (unsigned char)(rand() % 255);
 	}
 
-	evolve( pop );
+	//evolve( pop );
+
+	FPGA fpga;
+	bitstring_to_fpga ( &fpga, pop[0].values );
+	print_fpga ( &fpga );
 
 	return 0;
 }
