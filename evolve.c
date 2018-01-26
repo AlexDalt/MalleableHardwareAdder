@@ -137,8 +137,16 @@ int main()
 	//evolve( pop );
 
 	FPGA fpga;
+	pop[0].values[0] = 51;
+	pop[0].values[1] = 0;
+	pop[0].values[2] = 0;
+	pop[0].values[3] = 26;
 	bitstring_to_fpga ( &fpga, pop[0].values );
+	fpga.cells[0][1].out = 0;
+	fpga.cells[1][0].out = 0;
 	print_fpga ( &fpga );
+	evaluate_fpga ( &fpga );
+	printf ( "output bits, &: %d, |: %d\n", fpga.cells[0][0].out, fpga.cells[1][1].out );
 
 	return 0;
 }

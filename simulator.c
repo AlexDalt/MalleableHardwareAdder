@@ -124,7 +124,6 @@ void tock ( FPGA *fpga )
 	{
 		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
 		{
-			fpga->cells[ i ][ j ].out = 2;
 			unsigned char in1,in2;
 			in1 = fpga->cells[ i ][ j ].in1;
 			in2 = fpga->cells[ i ][ j ].in2;
@@ -136,11 +135,19 @@ void tock ( FPGA *fpga )
 					{
 						fpga->cells[ i ][ j ].out = !in1;
 					}
+					else
+					{
+						fpga->cells[ i ][ j ].out = 2;
+					}
 					break;
 				case OR:
 					if ( in1 != 2 && in2 != 2 )
 					{
 						fpga->cells[ i ][ j ].out = in1 | in2;
+					}
+					else
+					{
+						fpga->cells[ i ][ j ].out = 2;
 					}
 					break;
 				case AND:
@@ -148,11 +155,19 @@ void tock ( FPGA *fpga )
 					{
 						fpga->cells[ i ][ j ].out = in1 & in2;
 					}
+					else
+					{
+						fpga->cells[ i ][ j ].out = 2;
+					}
 					break;
 				case NAND:
 					if ( in1 != 2 && in2 != 2 )
 					{
 						fpga->cells[ i ][ j ].out = !(in1 & in2);
+					}
+					else
+					{
+						fpga->cells[ i ][ j ].out = 2;
 					}
 					break;
 				case NOR:
@@ -160,17 +175,29 @@ void tock ( FPGA *fpga )
 					{
 						fpga->cells[ i ][ j ].out = !(in1 | in2);
 					}
+					else
+					{
+						fpga->cells[ i ][ j ].out = 2;
+					}
 					break;
 				case XOR:
 					if ( in1 != 2 && in2 != 2 )
 					{
 						fpga->cells[ i ][ j ].out = in1 ^ in2;
 					}
+					else
+					{
+						fpga->cells[ i ][ j ].out = 2;
+					}
 					break;
 				case XNOR:
 					if ( in1 != 2 && in2 != 2 )
 					{
 						fpga->cells[ i ][ j ].out = !(in1 | in2);
+					}
+					else
+					{
+						fpga->cells[ i ][ j ].out = 2;
 					}
 					break;
 				default:
@@ -224,7 +251,7 @@ void print_fpga ( FPGA *fpga )
 			switch ( fpga->cells[ i ][ j ].gate )
 			{
 				case OFF:
-					printf( " " );
+					printf( "%d", fpga->cells[ i ][ j ].out );
 					break;
 				case NOT:
 					printf( "!" );
