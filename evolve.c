@@ -4,11 +4,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define MUTATION 5
+#define MUTATION 0.01f
 
 typedef struct {
 	unsigned char values[4];
-	float eval;
+	int eval;
 } Individual;
 
 void print_ind( Individual ind )
@@ -22,7 +22,7 @@ void print_ind( Individual ind )
 	}
 }
 
-float evaluate( Individual ind )
+int evaluate( Individual ind )
 {
 	int score = 0;
 	for ( int i = 0 ; i < 4 ; i++ )
@@ -36,31 +36,53 @@ float evaluate( Individual ind )
 		}
 	}
 
-	return (float)score/32;
+	return score;
 }
 
 void new_pop( Individual most_fit, Individual *pop )
 {
 	int random;
+	int total_score = 0;
+	Individual new_pop[ 50 ];
 
 	for ( int i = 0 ; i < 50 ; i++ )
 	{
-		pop[ i ] = most_fit;
+		total_score += pop[ i ].eval;
 	}
 
-	for ( int i = 1 ; i < 50 ; i++ )
+
+	for ( int i = 0 ; i < 50 ; i++ )
 	{
-		for ( int j = 0 ; j < 4; j++)
+		random = rand() % total_score;
+		int score_count = 0;
+		int index = 0;
+		while ( score_count + pop[ index ].eval < random )
 		{
-			for ( int k = 0; k < 8; k++ )
+			score_count += pop[ index ].eval;
+			index++;
+		}
+
+		new_pop[ i ] = pop[ index ];
+	}
+
+	for ( int i = 0 ; i < 50 ; i++ )
+	{
+		for ( int j = 0 ; j < 4; j++ )
+		{
+			for ( int k = 0 ; k < 8 ; k++ )
 			{
-				random = rand() % 100;
-				if( random < MUTATION)
+				float random_mut = (float)rand() / (float)RAND_MAX;
+				if( random_mut < MUTATION )
 				{
-					pop[ i ].values[ j ] = pop[ i ].values[ j ] ^ (1 << k);
+					new_pop[ i ].values[ j ] = new_pop[ i ].values[ j ] ^ (1 << k);
 				}
 			}
 		}
+	}
+
+	for ( int  i = 0 ; i < 50 ; i++ )
+	{
+		pop[ i ] = new_pop[ i ];
 	}
 }
 
@@ -70,7 +92,7 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	most_fit.eval = 0;
 
-	while( most_fit.eval != 1 )
+	while( most_fit.eval != 32 )
 	{
 
 		for ( int i = 0 ; i < 50 ; i++ )
@@ -85,7 +107,7 @@ void evolve( Individual *pop )
 
 		printf( "Most fit bitstring %2d : ", iteration );
 		print_ind( most_fit );
-		printf( " %.3f\n", most_fit.eval );
+		printf( " %d\n", most_fit.eval );
 
 		iteration++;
 
