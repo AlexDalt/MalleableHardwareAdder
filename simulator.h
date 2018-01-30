@@ -30,6 +30,7 @@ typedef struct {
 
 typedef struct {
 	Cell cells[ FPGA_HEIGHT ][ FPGA_WIDTH ];
+	unsigned char input[ FPGA_WIDTH ];
 } FPGA;
 
 /*

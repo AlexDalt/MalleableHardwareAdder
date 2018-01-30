@@ -32,7 +32,7 @@ void tick ( FPGA *fpga )
 				case NORTH:
 					if ( i == 0 )
 					{
-						fpga->cells[ i ][ j ].in1 = 2;
+						fpga->cells[ i ][ j ].in1 = fpga->input[ j ];
 					}
 					else
 					{
@@ -50,7 +50,7 @@ void tick ( FPGA *fpga )
 					}
 					break;
 				case EAST:
-					if ( j == FPGA_WIDTH )
+					if ( j == FPGA_WIDTH - 1 )
 					{
 						fpga->cells[ i ][ j ].in1 = 2;
 					}
@@ -94,7 +94,7 @@ void tick ( FPGA *fpga )
 					}
 					break;
 				case EAST:
-					if ( j == FPGA_WIDTH )
+					if ( j == FPGA_WIDTH - 1 )
 					{
 						fpga->cells[ i ][ j ].in2 = 2;
 					}
@@ -193,7 +193,7 @@ void tock ( FPGA *fpga )
 				case XNOR:
 					if ( in1 != 2 && in2 != 2 )
 					{
-						fpga->cells[ i ][ j ].out = !(in1 | in2);
+						fpga->cells[ i ][ j ].out = !(in1 ^ in2);
 					}
 					else
 					{
@@ -218,6 +218,22 @@ void evaluate_fpga ( FPGA *fpga )
 
 void print_fpga ( FPGA *fpga )
 {
+	for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+	{
+		printf( "-----" );
+	}
+	printf( "\n" );
+	for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+	{
+		printf( "| %d |", fpga->input[ j ] );
+	}
+	printf( "\n" );
+	for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+	{
+		printf( "-----" );
+	}
+	printf( "\n" );
+
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
 		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
@@ -227,7 +243,7 @@ void print_fpga ( FPGA *fpga )
 		printf("\n");
 		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
 		{
-			if ( fpga->cells[ i ][ j ].in1_d == NORTH || fpga->cells[ i ][ j ].in2_d == NORTH )
+			if ( fpga->cells[ i ][ j ].in1_d == NORTH || (fpga->cells[ i ][ j ].gate != NOT && fpga->cells[ i ][ j ].in2_d == NORTH) )
 			{
 				printf( "| v |" );
 			}
@@ -239,7 +255,7 @@ void print_fpga ( FPGA *fpga )
 		printf("\n");
 		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
 		{
-			if ( fpga->cells[ i ][ j ].in1_d == WEST || fpga->cells[ i ][ j ].in2_d == WEST )
+			if ( fpga->cells[ i ][ j ].in1_d == WEST || (fpga->cells[ i ][ j ].gate != NOT && fpga->cells[ i ][ j ].in2_d == WEST) )
 			{
 				printf( "|>" );
 			}
@@ -276,7 +292,7 @@ void print_fpga ( FPGA *fpga )
 					break;
 			}
 
-			if ( fpga->cells[ i ][ j ].in1_d == EAST || fpga->cells[ i ][ j ].in2_d == EAST )
+			if ( fpga->cells[ i ][ j ].in1_d == EAST || (fpga->cells[ i ][ j ].gate != NOT && fpga->cells[ i ][ j ].in2_d == EAST) )
 			{
 				printf( "<|" );
 			}
@@ -288,7 +304,7 @@ void print_fpga ( FPGA *fpga )
 		printf("\n");
 		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
 		{
-			if ( fpga->cells[ i ][ j ].in1_d == SOUTH || fpga->cells[ i ][ j ].in2_d == SOUTH )
+			if ( fpga->cells[ i ][ j ].in1_d == SOUTH || (fpga->cells[ i ][ j ].gate != NOT &&fpga->cells[ i ][ j ].in2_d == SOUTH) )
 			{
 				printf( "| ^ |" );
 			}
@@ -304,4 +320,20 @@ void print_fpga ( FPGA *fpga )
 		printf( "-----" );
 	}
 	printf("\n");
+
+	for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+	{
+		printf( "-----" );
+	}
+	printf( "\n" );
+	for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+	{
+		printf( "| %d |", fpga->cells[ FPGA_HEIGHT - 1 ][ j ].out );
+	}
+	printf( "\n" );
+	for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+	{
+		printf( "-----" );
+	}
+	printf( "\n" );
 }
