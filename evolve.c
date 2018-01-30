@@ -46,6 +46,11 @@ int evaluate( Individual ind )
 		}
 	}
 
+	if ( score == 0 )
+	{
+		score = 1;
+	}
+
 	return score;
 }
 
