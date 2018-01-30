@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include "simulator.h"
 
-#define MUTATION 0.01f
+#define MUTATION 0.05f
 #define POP_SIZE 100
 
 typedef struct {
