@@ -3,6 +3,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <math.h>
 #include "simulator.h"
 
 #define MUTATION 0.05f
@@ -28,21 +29,30 @@ int evaluate( Individual ind )
 {
 	FPGA fpga;
 	int score = 0;
-	for ( int i = 0 ; i < 4 ; i++ )
+	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
 		bitstring_to_fpga( &fpga, ind.values );
-		int v1 = i & 1;
-		int v2 = (i >> 1) & 1;
-		fpga.input[ 0 ] = v1;
-		fpga.input[ 1 ] = v2;
-		evaluate_fpga( &fpga );
-		if ( fpga.cells[ 1 ][ 0 ].out == (((v1 + v2) >> 1) & 1) )
+
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
 		{
-			score++;
+			fpga.input[ j ] = ( i >> (FPGA_WIDTH - j - 1) ) & 1;
 		}
-		if ( fpga.cells[ 1 ][ 1 ].out == ((v1 + v2) & 1) )
+
+		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
+
+		int v1 = i & mask;
+		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+
+		evaluate_fpga( &fpga );
+
+		int sum = v1 + v2;
+
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
 		{
-			score++;
+			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].out == (( sum >> j ) & 1) )
+			{
+				score++;
+			}
 		}
 	}
 
@@ -108,7 +118,7 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	most_fit.eval = 0;
 
-	while( most_fit.eval != 8 )
+	while( most_fit.eval != ((FPGA_WIDTH/2)+1) * pow( 2, FPGA_WIDTH ) )
 	{
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
@@ -152,10 +162,10 @@ int main()
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
-		pop[ i ].values[ 0 ] = (unsigned char)(rand() % 255);
-		pop[ i ].values[ 1 ] = (unsigned char)(rand() % 255);
-		pop[ i ].values[ 2 ] = (unsigned char)(rand() % 255);
-		pop[ i ].values[ 3 ] = (unsigned char)(rand() % 255);
+		for ( int j = 0 ; j < STRING_LENGTH_BYTES ; j++ )
+		{
+			pop[ i ].values[ j ] = (unsigned char)(rand() % 255);
+		}
 	}
 
 	evolve( pop );
