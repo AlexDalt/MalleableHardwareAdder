@@ -14,6 +14,42 @@ typedef struct {
 	int eval;
 } Individual;
 
+void print_fpga_exhaustive ( Individual ind )
+{
+	FPGA fpga;
+	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
+	{
+		bitstring_to_fpga( &fpga, ind.values );
+
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+		{
+			fpga.input[ j ] = ( i >> (FPGA_WIDTH - j - 1) ) & 1;
+		}
+
+		evaluate_fpga( &fpga );
+		print_fpga( &fpga );
+		int score = 0;
+
+		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
+
+		int v1 = i & mask;
+		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+
+		evaluate_fpga( &fpga );
+
+		int sum = v1 + v2;
+
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+		{
+			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].out == (( sum >> j ) & 1) )
+			{
+				score++;
+			}
+		}
+		printf("score: %d\n",score);
+	}
+}
+
 void print_ind( Individual ind )
 {
 	for ( int i = 0 ; i < STRING_LENGTH_BYTES ; i++ )
@@ -22,6 +58,7 @@ void print_ind( Individual ind )
 		{
 			printf( "%d", !!(ind.values[ i ] & ( 1 << j )) );
 		}
+		printf( " " );
 	}
 }
 
@@ -75,7 +112,6 @@ void new_pop( Individual most_fit, Individual *pop )
 		total_score += pop[ i ].eval;
 	}
 
-
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
 		random = rand() % total_score;
@@ -118,8 +154,9 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	most_fit.eval = 0;
 
-	while( most_fit.eval != ((FPGA_WIDTH/2)+1) * pow( 2, FPGA_WIDTH ) )
+	while( most_fit.eval != FPGA_WIDTH * pow( 2, FPGA_WIDTH ) )
 	{
+		most_fit.eval = 0;
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
 			pop[ i ].eval = evaluate( pop[ i ] );
@@ -137,11 +174,6 @@ void evolve( Individual *pop )
 		iteration++;
 
 		new_pop( most_fit, pop );
-		/*
-		bitstring_to_fpga( &fpga, most_fit.values );
-		print_fpga( &fpga );
-		getchar();
-		*/
 	}
 
 	printf("final fpga:\n");
