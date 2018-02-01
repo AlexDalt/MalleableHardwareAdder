@@ -62,7 +62,7 @@ void print_ind( Individual ind )
 	}
 }
 
-int evaluate( Individual ind )
+int evaluate( Individual ind, int difficulty )
 {
 	FPGA fpga;
 	int score = 0;
@@ -84,7 +84,7 @@ int evaluate( Individual ind )
 
 		int sum = v1 + v2;
 
-		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+		for ( int j = 0 ; j < difficulty ; j++ )
 		{
 			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].out == (( sum >> j ) & 1) )
 			{
@@ -154,17 +154,24 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	most_fit.eval = 0;
 
+	int difficulty = 1;
+
 	while( most_fit.eval != FPGA_WIDTH * pow( 2, FPGA_WIDTH ) )
 	{
 		most_fit.eval = 0;
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
-			pop[ i ].eval = evaluate( pop[ i ] );
+			pop[ i ].eval = evaluate( pop[ i ], difficulty );
 
 			if ( most_fit.eval < pop[ i ].eval )
 			{
 				most_fit = pop[ i ];
 			}
+		}
+
+		if ( most_fit.eval == pow( 2, FPGA_WIDTH ) * difficulty )
+		{
+			difficulty++;
 		}
 
 		printf( "Most fit bitstring %2d : ", iteration );
