@@ -6,7 +6,7 @@
 #include <math.h>
 #include "simulator.h"
 
-#define MUTATION 0.05f
+#define MUTATION 0.02f
 #define POP_SIZE 100
 
 typedef struct {
@@ -47,6 +47,14 @@ void print_fpga_exhaustive ( Individual ind )
 			}
 		}
 		printf("score: %d\n",score);
+	}
+}
+
+void process_score( Individual *pop )
+{
+	for ( int i = 0 ; i < POP_SIZE ; i++ )
+	{
+		//pop[ i ].eval = exp( pop[ i ].eval );
 	}
 }
 
@@ -107,6 +115,8 @@ void new_pop( Individual most_fit, Individual *pop )
 	int total_score = 0;
 	Individual new_pop[ POP_SIZE ];
 
+	process_score( pop );
+
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
 		total_score += pop[ i ].eval;
@@ -117,7 +127,7 @@ void new_pop( Individual most_fit, Individual *pop )
 		random = rand() % total_score;
 		int score_count = 0;
 		int index = 0;
-		while ( score_count + pop[ index ].eval < random )
+		while ( index < POP_SIZE && score_count + pop[ index ].eval < random )
 		{
 			score_count += pop[ index ].eval;
 			index++;
