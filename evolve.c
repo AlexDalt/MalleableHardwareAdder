@@ -6,7 +6,7 @@
 #include <math.h>
 #include "simulator.h"
 
-#define MUTATION 0.02f
+#define MUTATION 0.008f
 #define POP_SIZE 100
 
 typedef struct {
@@ -50,14 +50,6 @@ void print_fpga_exhaustive ( Individual ind )
 	}
 }
 
-void process_score( Individual *pop )
-{
-	for ( int i = 0 ; i < POP_SIZE ; i++ )
-	{
-		//pop[ i ].eval = exp( pop[ i ].eval );
-	}
-}
-
 void print_ind( Individual ind )
 {
 	for ( int i = 0 ; i < STRING_LENGTH_BYTES ; i++ )
@@ -76,17 +68,21 @@ int evaluate( Individual ind, int difficulty )
 	int score = 0;
 	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
-		bitstring_to_fpga( &fpga, ind.values );
-
-		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
-		{
-			fpga.input[ j ] = ( i >> (FPGA_WIDTH - j - 1) ) & 1;
-		}
-
 		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
 
 		int v1 = i & mask;
 		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+
+		bitstring_to_fpga( &fpga, ind.values );
+
+		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+		{
+			fpga.input[ j*2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+		}
+		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+		{
+			fpga.input[ j*2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+		}
 
 		evaluate_fpga( &fpga );
 
@@ -109,27 +105,56 @@ int evaluate( Individual ind, int difficulty )
 	return score;
 }
 
+void quicksort( Individual *pop, int low, int high )
+{
+	if ( low < high )
+	{
+		int index = low;
+		Individual pivot = pop[ index ];
+		for ( int i = low + 1 ; i < high ; i++ )
+		{
+			if ( pop[ i ].eval < pivot.eval )
+			{
+				Individual disp = pop[ index + 1 ];
+				Individual new = pop[ i ];
+				pop[ i ] = disp;
+				pop[ index + 1 ] = pivot;
+				pop[ index ] = new;
+				index++;
+			}
+		}
+
+		quicksort( pop, low, index );
+		quicksort( pop, index + 1, high );
+	}
+}
+
+void order( Individual *pop )
+{
+	quicksort( pop, 0, POP_SIZE );
+}
+
 void new_pop( Individual most_fit, Individual *pop )
 {
 	int random;
 	int total_score = 0;
 	Individual new_pop[ POP_SIZE ];
 
-	process_score( pop );
-
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
-		total_score += pop[ i ].eval;
+		total_score += 1 + i;
 	}
+
+	order( pop );
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
 		random = rand() % total_score;
 		int score_count = 0;
 		int index = 0;
-		while ( index < POP_SIZE && score_count + pop[ index ].eval < random )
+		while ( index < POP_SIZE && score_count + 1 + index < random )
 		{
-			score_count += pop[ index ].eval;
+			score_count += 1 + index;
 			index++;
 		}
 
@@ -164,7 +189,7 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	most_fit.eval = 0;
 
-	int difficulty = 1;
+	int difficulty = FPGA_WIDTH;
 
 	while( most_fit.eval != FPGA_WIDTH * pow( 2, FPGA_WIDTH ) )
 	{
