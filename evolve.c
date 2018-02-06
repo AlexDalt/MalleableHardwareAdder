@@ -6,8 +6,8 @@
 #include <math.h>
 #include "simulator.h"
 
-#define MUTATION 0.008f
 #define POP_SIZE 100
+#define MUTATION 0.016f
 
 typedef struct {
 	unsigned char values[STRING_LENGTH_BYTES];
@@ -62,10 +62,11 @@ void print_ind( Individual ind )
 	}
 }
 
-int evaluate( Individual ind, int difficulty )
+int evaluate( Individual ind, int *difficulty )
 {
 	FPGA fpga;
 	int score = 0;
+
 	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
 		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
@@ -88,7 +89,7 @@ int evaluate( Individual ind, int difficulty )
 
 		int sum = v1 + v2;
 
-		for ( int j = 0 ; j < difficulty ; j++ )
+		for ( int j = 0 ; j < *difficulty ; j++ )
 		{
 			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].out == (( sum >> j ) & 1) )
 			{
@@ -96,6 +97,25 @@ int evaluate( Individual ind, int difficulty )
 			}
 		}
 	}
+
+	if ( score == pow( 2, FPGA_WIDTH ) * *difficulty )
+	{
+		*difficulty += 1;
+	}
+
+	int bonus = 0;
+	for ( int x = 0 ; x < FPGA_WIDTH ; x++ )
+	{
+		for ( int y = 0 ; y < FPGA_HEIGHT ; y++ )
+		{
+			if ( fpga.cells[ y ][ x ].gate == OFF )
+			{
+				bonus++;
+			}
+		}
+	}
+
+	score += bonus/3;
 
 	if ( score == 0 )
 	{
@@ -189,14 +209,14 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	most_fit.eval = 0;
 
-	int difficulty = FPGA_WIDTH;
+	int difficulty = 1;
 
 	while( most_fit.eval != FPGA_WIDTH * pow( 2, FPGA_WIDTH ) )
 	{
 		most_fit.eval = 0;
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
-			pop[ i ].eval = evaluate( pop[ i ], difficulty );
+			pop[ i ].eval = evaluate( pop[ i ], &difficulty );
 
 			if ( most_fit.eval < pop[ i ].eval )
 			{
@@ -204,22 +224,27 @@ void evolve( Individual *pop )
 			}
 		}
 
-		if ( most_fit.eval == pow( 2, FPGA_WIDTH ) * difficulty )
-		{
-			difficulty++;
-		}
 
 		printf( "Most fit bitstring %2d : ", iteration );
 		print_ind( most_fit );
-		printf( " %d\n", most_fit.eval );
+		printf( " score: %d difficulty: %d\n", most_fit.eval, difficulty );
 
 		iteration++;
 
 		new_pop( most_fit, pop );
+
+		if ( iteration > 15000 )
+		{
+			break;
+		}
 	}
 
 	printf("final fpga:\n");
 	bitstring_to_fpga( &fpga, most_fit.values );
+	for ( int i = 0 ; i < FPGA_WIDTH ; i++ )
+	{
+		fpga.input[ i ] = rand() & 1;
+	}
 	evaluate_fpga( &fpga );
 	print_fpga( &fpga );
 }
