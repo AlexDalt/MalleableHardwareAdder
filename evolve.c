@@ -6,7 +6,7 @@
 #include <math.h>
 #include "simulator.h"
 
-#define POP_SIZE 1000
+#define POP_SIZE 200
 #define MUTATION 0.008f
 
 typedef struct {
@@ -89,7 +89,7 @@ int evaluate( Individual ind )
 
 		int sum = v1 + v2;
 
-		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+		for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
 		{
 			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].out == (( sum >> j ) & 1) )
 			{
@@ -190,7 +190,7 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	most_fit.eval = 0;
 
-	while( most_fit.eval != FPGA_WIDTH * pow( 2, FPGA_WIDTH ) )
+	while( most_fit.eval != (FPGA_WIDTH/2 + 1) * pow( 2, FPGA_WIDTH ) )
 	{
 		most_fit.eval = 0;
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
