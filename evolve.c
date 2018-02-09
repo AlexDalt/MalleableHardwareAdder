@@ -6,49 +6,16 @@
 #include <math.h>
 #include "simulator.h"
 
-#define POP_SIZE 200
+#define POP_SIZE 300
 #define MUTATION 0.008f
+#define FITNESS_WEIGHT 4
+#define SMALLNESS_WEIGHT 1
+#define DIVERSITY_WEIGHT 1
 
-typedef struct {
-	unsigned char values[STRING_LENGTH_BYTES];
-	int eval;
+typedef struct Individual {
+	unsigned char values[ STRING_LENGTH_BYTES ];
+	int eval[ 3 ];
 } Individual;
-
-void print_fpga_exhaustive ( Individual ind )
-{
-	FPGA fpga;
-	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
-	{
-		bitstring_to_fpga( &fpga, ind.values );
-
-		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
-		{
-			fpga.input[ j ] = ( i >> (FPGA_WIDTH - j - 1) ) & 1;
-		}
-
-		evaluate_fpga( &fpga );
-		print_fpga( &fpga );
-		int score = 0;
-
-		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
-
-		int v1 = i & mask;
-		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
-
-		evaluate_fpga( &fpga );
-
-		int sum = v1 + v2;
-
-		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
-		{
-			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].out == (( sum >> j ) & 1) )
-			{
-				score++;
-			}
-		}
-		printf("score: %d\n",score);
-	}
-}
 
 void print_ind( Individual ind )
 {
@@ -62,10 +29,36 @@ void print_ind( Individual ind )
 	}
 }
 
-int evaluate( Individual ind )
+int ind_distance ( Individual x, Individual y )
+{
+	int distance = 0;
+	FPGA fpga_x, fpga_y;
+
+	bitstring_to_fpga( &fpga_x, x.values );
+	bitstring_to_fpga( &fpga_y, y.values );
+
+	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
+	{
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+		{
+			if (( fpga_x.cells[ i ][ j ].gate != fpga_y.cells[ i ][ j ].gate ) ||
+				( fpga_x.cells[ i ][ j ].in1_d != fpga_y.cells[ i ][ j ].in1_d ) ||
+				( fpga_x.cells[ i ][ j ].in2_d != fpga_y.cells[ i ][ j ].in2_d ))
+			{
+				distance++;
+			}
+		}
+	}
+
+	return distance;
+}
+
+void evaluate( Individual *ind, Individual *pop )
 {
 	FPGA fpga;
-	int score = 0;
+	int fitness = 1;
+	int smallness = 1;
+	int diversity = 1;
 
 	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
@@ -74,7 +67,7 @@ int evaluate( Individual ind )
 		int v1 = i & mask;
 		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
 
-		bitstring_to_fpga( &fpga, ind.values );
+		bitstring_to_fpga( &fpga, ind->values );
 
 		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
 		{
@@ -93,17 +86,35 @@ int evaluate( Individual ind )
 		{
 			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].out == (( sum >> j ) & 1) )
 			{
-				score++;
+				fitness++;
 			}
 		}
 	}
 
-	if ( score == 0 )
+	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
-		score = 1;
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+		{
+			if ( fpga.cells[ i ][ j ].gate == OFF )
+			{
+				smallness++;
+			}
+		}
 	}
 
-	return score;
+	for ( int i = 0 ; i < POP_SIZE ; i++ )
+	{
+
+		int distance = ind_distance( *ind, pop[ i ] );
+		diversity += pow ( distance, 2 );
+	}
+
+	diversity = diversity / POP_SIZE;
+	diversity = (int)sqrt( (double)diversity );
+
+	ind->eval[ 0 ] = fitness;
+	ind->eval[ 1 ] = smallness;
+	ind->eval[ 2 ] = diversity;
 }
 
 void quicksort( Individual *pop, int low, int high )
@@ -112,9 +123,11 @@ void quicksort( Individual *pop, int low, int high )
 	{
 		int index = low;
 		Individual pivot = pop[ index ];
+		int pivot_score = FITNESS_WEIGHT * pivot.eval[ 0 ] + SMALLNESS_WEIGHT * pivot.eval[ 1 ] + DIVERSITY_WEIGHT * pivot.eval[ 2 ];
 		for ( int i = low + 1 ; i < high ; i++ )
 		{
-			if ( pop[ i ].eval < pivot.eval )
+			int pop_score = FITNESS_WEIGHT * pop[ i ].eval[ 0 ] + SMALLNESS_WEIGHT * pop[ i ].eval[ 1 ] + DIVERSITY_WEIGHT * pop[ i ].eval[ 2 ];
+			if ( pop_score < pivot_score )
 			{
 				Individual disp = pop[ index + 1 ];
 				Individual new = pop[ i ];
@@ -188,25 +201,28 @@ void evolve( Individual *pop )
 	FPGA fpga;
 	int iteration = 0;
 	Individual most_fit;
-	most_fit.eval = 0;
+	int most_fit_score = 0;
 
-	while( most_fit.eval != (FPGA_WIDTH/2 + 1) * pow( 2, FPGA_WIDTH ) )
+	while( most_fit.eval[ 0 ] != (FPGA_WIDTH/2 + 1) * pow( 2, FPGA_WIDTH ) )
 	{
-		most_fit.eval = 0;
+		most_fit_score = 0;
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
-			pop[ i ].eval = evaluate( pop[ i ] );
+			evaluate( &(pop[ i ]), pop );
+			
+			int score = pop[ i ].eval[ 0 ] + pop[ i ].eval[ 1 ] + pop[ i ].eval[ 2 ];
 
-			if ( most_fit.eval < pop[ i ].eval )
+			if ( most_fit_score < score )
 			{
 				most_fit = pop[ i ];
+				most_fit_score = score;
 			}
 		}
 
 
 		printf( "Most fit bitstring %2d : ", iteration );
 		print_ind( most_fit );
-		printf( " score: %d\n", most_fit.eval );
+		printf( " fitness: %d, smallness: %d, diversity %d\n", most_fit.eval[ 0 ], most_fit.eval[ 1 ], most_fit.eval[ 2 ] );
 
 		iteration++;
 
