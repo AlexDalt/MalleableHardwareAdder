@@ -9,7 +9,7 @@
 #define POP_SIZE 300
 #define MUTATION 0.012f
 #define FITNESS_WEIGHT 5
-#define SIZE_WEIGHT 0
+#define SIZE_WEIGHT 1
 #define DIVERSITY_WEIGHT 1
 
 typedef struct Individual {
