@@ -7,9 +7,9 @@
 #include "simulator.h"
 
 #define POP_SIZE 300
-#define MUTATION 0.008f
-#define FITNESS_WEIGHT 4
-#define SMALLNESS_WEIGHT 1
+#define MUTATION 0.012f
+#define FITNESS_WEIGHT 5
+#define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 1
 
 typedef struct Individual {
@@ -41,9 +41,15 @@ int ind_distance ( Individual x, Individual y )
 	{
 		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
 		{
-			if (( fpga_x.cells[ i ][ j ].gate != fpga_y.cells[ i ][ j ].gate ) ||
-				( fpga_x.cells[ i ][ j ].in1_d != fpga_y.cells[ i ][ j ].in1_d ) ||
-				( fpga_x.cells[ i ][ j ].in2_d != fpga_y.cells[ i ][ j ].in2_d ))
+			if ( fpga_x.cells[ i ][ j ].gate != fpga_y.cells[ i ][ j ].gate )
+			{
+				distance++;
+			}
+			if ( fpga_x.cells[ i ][ j ].in1_d != fpga_y.cells[ i ][ j ].in1_d )
+			{
+				distance++;
+			}
+			if ( fpga_x.cells[ i ][ j ].in2_d != fpga_y.cells[ i ][ j ].in2_d )
 			{
 				distance++;
 			}
@@ -57,7 +63,7 @@ void evaluate( Individual *ind, Individual *pop )
 {
 	FPGA fpga;
 	int fitness = 1;
-	int smallness = 1;
+	int size = 1;
 	int diversity = 1;
 
 	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
@@ -97,7 +103,7 @@ void evaluate( Individual *ind, Individual *pop )
 		{
 			if ( fpga.cells[ i ][ j ].gate == OFF )
 			{
-				smallness++;
+				size++;
 			}
 		}
 	}
@@ -113,7 +119,7 @@ void evaluate( Individual *ind, Individual *pop )
 	diversity = (int)sqrt( (double)diversity );
 
 	ind->eval[ 0 ] = fitness;
-	ind->eval[ 1 ] = smallness;
+	ind->eval[ 1 ] = size;
 	ind->eval[ 2 ] = diversity;
 }
 
@@ -123,10 +129,10 @@ void quicksort( Individual *pop, int low, int high )
 	{
 		int index = low;
 		Individual pivot = pop[ index ];
-		int pivot_score = FITNESS_WEIGHT * pivot.eval[ 0 ] + SMALLNESS_WEIGHT * pivot.eval[ 1 ] + DIVERSITY_WEIGHT * pivot.eval[ 2 ];
+		int pivot_score = FITNESS_WEIGHT * pivot.eval[ 0 ] + SIZE_WEIGHT * pivot.eval[ 1 ] + DIVERSITY_WEIGHT * pivot.eval[ 2 ];
 		for ( int i = low + 1 ; i < high ; i++ )
 		{
-			int pop_score = FITNESS_WEIGHT * pop[ i ].eval[ 0 ] + SMALLNESS_WEIGHT * pop[ i ].eval[ 1 ] + DIVERSITY_WEIGHT * pop[ i ].eval[ 2 ];
+			int pop_score = FITNESS_WEIGHT * pop[ i ].eval[ 0 ] + SIZE_WEIGHT * pop[ i ].eval[ 1 ] + DIVERSITY_WEIGHT * pop[ i ].eval[ 2 ];
 			if ( pop_score < pivot_score )
 			{
 				Individual disp = pop[ index + 1 ];
@@ -203,14 +209,14 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	int most_fit_score = 0;
 
-	while( most_fit.eval[ 0 ] != (FPGA_WIDTH/2 + 1) * pow( 2, FPGA_WIDTH ) )
+	while( most_fit.eval[ 0 ] != (FPGA_WIDTH/2 + 1) * pow( 2, FPGA_WIDTH ) + 1 )
 	{
 		most_fit_score = 0;
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
 			evaluate( &(pop[ i ]), pop );
-			
-			int score = pop[ i ].eval[ 0 ] + pop[ i ].eval[ 1 ] + pop[ i ].eval[ 2 ];
+
+			int score = FITNESS_WEIGHT * pop[ i ].eval[ 0 ] + SIZE_WEIGHT * pop[ i ].eval[ 1 ] + DIVERSITY_WEIGHT * pop[ i ].eval[ 2 ];
 
 			if ( most_fit_score < score )
 			{
@@ -222,7 +228,7 @@ void evolve( Individual *pop )
 
 		printf( "Most fit bitstring %2d : ", iteration );
 		print_ind( most_fit );
-		printf( " fitness: %d, smallness: %d, diversity %d\n", most_fit.eval[ 0 ], most_fit.eval[ 1 ], most_fit.eval[ 2 ] );
+		printf( " fitness: %d, size: %d, diversity %d\n", most_fit.eval[ 0 ] - 1, STRING_LENGTH_BYTES + 1 - most_fit.eval[ 1 ], most_fit.eval[ 2 ] );
 
 		iteration++;
 
