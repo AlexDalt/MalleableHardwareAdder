@@ -7,10 +7,10 @@
 #include "simulator.h"
 
 #define POP_SIZE 300
-#define MUTATION 0.012f
-#define FITNESS_WEIGHT 5
-#define SIZE_WEIGHT 1
-#define DIVERSITY_WEIGHT 1
+#define MUTATION 0.04f
+#define FITNESS_WEIGHT 1
+#define SIZE_WEIGHT 0
+#define DIVERSITY_WEIGHT 0
 
 typedef struct Individual {
 	unsigned char values[ STRING_LENGTH_BYTES ];
@@ -45,11 +45,27 @@ int ind_distance ( Individual x, Individual y )
 			{
 				distance++;
 			}
-			if ( fpga_x.cells[ i ][ j ].in1_d != fpga_y.cells[ i ][ j ].in1_d )
+			if ( fpga_x.cells[ i ][ j ].n_out != fpga_y.cells[ i ][ j ].n_out )
 			{
 				distance++;
 			}
-			if ( fpga_x.cells[ i ][ j ].in2_d != fpga_y.cells[ i ][ j ].in2_d )
+			if ( fpga_x.cells[ i ][ j ].e_out != fpga_y.cells[ i ][ j ].e_out )
+			{
+				distance++;
+			}
+			if ( fpga_x.cells[ i ][ j ].s_out != fpga_y.cells[ i ][ j ].s_out )
+			{
+				distance++;
+			}
+			if ( fpga_x.cells[ i ][ j ].w_out != fpga_y.cells[ i ][ j ].w_out )
+			{
+				distance++;
+			}
+			if ( fpga_x.cells[ i ][ j ].g_in1 != fpga_y.cells[ i ][ j ].g_in1 )
+			{
+				distance++;
+			}
+			if ( fpga_x.cells[ i ][ j ].g_in2 != fpga_y.cells[ i ][ j ].g_in2 )
 			{
 				distance++;
 			}
@@ -90,7 +106,7 @@ void evaluate( Individual *ind, Individual *pop )
 
 		for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
 		{
-			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].out == (( sum >> j ) & 1) )
+			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( sum >> j ) & 1) )
 			{
 				fitness++;
 			}
@@ -154,7 +170,7 @@ void order( Individual *pop )
 	quicksort( pop, 0, POP_SIZE );
 }
 
-void new_pop( Individual most_fit, Individual *pop )
+void new_pop( Individual *pop )
 {
 	int random;
 	int total_score = 0;
@@ -207,11 +223,11 @@ void evolve( Individual *pop )
 	FPGA fpga;
 	int iteration = 0;
 	Individual most_fit;
-	int most_fit_score = 0;
+	int most_fit_score = -1;
 
 	while( most_fit.eval[ 0 ] != (FPGA_WIDTH/2 + 1) * pow( 2, FPGA_WIDTH ) + 1 )
 	{
-		most_fit_score = 0;
+		most_fit_score = -1;
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
 			evaluate( &(pop[ i ]), pop );
@@ -228,11 +244,11 @@ void evolve( Individual *pop )
 
 		printf( "Most fit bitstring %2d : ", iteration );
 		print_ind( most_fit );
-		printf( " fitness: %d, size: %d, diversity %d\n", most_fit.eval[ 0 ] - 1, STRING_LENGTH_BYTES + 1 - most_fit.eval[ 1 ], most_fit.eval[ 2 ] );
+		printf( " fitness: %d, size: %d, diversity %d\n", most_fit.eval[ 0 ] - 1, FPGA_WIDTH * FPGA_HEIGHT + 1 - most_fit.eval[ 1 ], most_fit.eval[ 2 ] );
 
 		iteration++;
 
-		new_pop( most_fit, pop );
+		new_pop( pop );
 	}
 
 	printf("final fpga:\n");
@@ -242,7 +258,6 @@ void evolve( Individual *pop )
 		fpga.input[ i ] = rand() & 1;
 	}
 	evaluate_fpga( &fpga );
-	print_fpga( &fpga );
 }
 
 int main()
@@ -264,5 +279,6 @@ int main()
 	}
 
 	evolve( pop );
+
 	return 0;
 }
