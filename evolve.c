@@ -7,10 +7,10 @@
 #include "simulator.h"
 
 #define POP_SIZE 300
-#define MUTATION 0.04f
-#define FITNESS_WEIGHT 1
+#define MUTATION 0.02f
+#define FITNESS_WEIGHT 5
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 0
+#define DIVERSITY_WEIGHT 1
 
 typedef struct Individual {
 	unsigned char values[ STRING_LENGTH_BYTES ];
