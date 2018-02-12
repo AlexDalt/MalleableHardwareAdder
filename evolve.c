@@ -7,10 +7,11 @@
 #include "simulator.h"
 
 #define POP_SIZE 300
-#define MUTATION 0.02f
-#define FITNESS_WEIGHT 5
+#define MUTATION 2.7f
+#define FITNESS_WEIGHT 2
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 1
+#define ELITISM 1
 
 typedef struct Individual {
 	unsigned char values[ STRING_LENGTH_BYTES ];
@@ -175,6 +176,8 @@ void new_pop( Individual *pop )
 	int random;
 	int total_score = 0;
 	Individual new_pop[ POP_SIZE ];
+	Individual elite;
+	elite.eval[ 0 ] = 0;
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
@@ -182,6 +185,14 @@ void new_pop( Individual *pop )
 	}
 
 	order( pop );
+
+	for ( int i = 0 ; i < POP_SIZE ; i++ )
+	{
+		if ( pop[ i ].eval[ 0 ] >= elite.eval[ 0 ] )
+		{
+			elite = pop[ i ];
+		}
+	}
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
@@ -204,12 +215,17 @@ void new_pop( Individual *pop )
 			for ( int k = 0 ; k < 8 ; k++ )
 			{
 				float random_mut = (float)rand() / (float)RAND_MAX;
-				if( random_mut < MUTATION )
+				if( random_mut < MUTATION / (float)(8*STRING_LENGTH_BYTES) )
 				{
 					new_pop[ i ].values[ j ] = new_pop[ i ].values[ j ] ^ (1 << k);
 				}
 			}
 		}
+	}
+
+	if ( ELITISM )
+	{
+		new_pop[ 0 ] = elite;
 	}
 
 	for ( int  i = 0 ; i < POP_SIZE ; i++ )
@@ -228,11 +244,18 @@ void evolve( Individual *pop )
 	while( most_fit.eval[ 0 ] != (FPGA_WIDTH/2 + 1) * pow( 2, FPGA_WIDTH ) + 1 )
 	{
 		most_fit_score = -1;
+		int mean_fit = 0;
+		int mean_size = 0;
+		int mean_div = 0;
+
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
 			evaluate( &(pop[ i ]), pop );
 
 			int score = FITNESS_WEIGHT * pop[ i ].eval[ 0 ] + SIZE_WEIGHT * pop[ i ].eval[ 1 ] + DIVERSITY_WEIGHT * pop[ i ].eval[ 2 ];
+			mean_fit += pop[ i ].eval[ 0 ];
+			mean_size += pop[ i ].eval[ 1 ];
+			mean_div += pop[ i ].eval[ 2 ];
 
 			if ( most_fit_score < score )
 			{
@@ -241,14 +264,26 @@ void evolve( Individual *pop )
 			}
 		}
 
+		mean_fit = mean_fit/POP_SIZE;
+		mean_size = mean_size/POP_SIZE;
+		mean_div = mean_div/POP_SIZE;
 
-		printf( "Most fit bitstring %2d : ", iteration );
-		print_ind( most_fit );
-		printf( " fitness: %d, size: %d, diversity %d\n", most_fit.eval[ 0 ] - 1, FPGA_WIDTH * FPGA_HEIGHT + 1 - most_fit.eval[ 1 ], most_fit.eval[ 2 ] );
+		printf( "Itteration %2d top 10 :\n", iteration );
+		for ( int i = 0 ; i < 10 ; i++ )
+		{
+			Individual ind = pop[ POP_SIZE - 1 - i ];
+			printf( "    %d : fitness %3d, size %3d, diversity %3d\n", i, ind.eval[ 0 ] - 1, FPGA_WIDTH * FPGA_HEIGHT + 1 - ind.eval[ 1 ], ind.eval[ 2 ] );
+		}
+		printf( "Population mean scores: fitness %d, size %d, diversity %d\n", mean_fit, FPGA_WIDTH * FPGA_HEIGHT + 1 - mean_size, mean_div);
 
 		iteration++;
 
 		new_pop( pop );
+
+		if ( ELITISM )
+		{
+			printf( "Elite fitness: %d\n", pop[ 0 ].eval[ 0 ] );
+		}
 	}
 
 	printf("final fpga:\n");
@@ -258,6 +293,8 @@ void evolve( Individual *pop )
 		fpga.input[ i ] = rand() & 1;
 	}
 	evaluate_fpga( &fpga );
+
+	print_ind( most_fit );
 }
 
 int main()
