@@ -6,9 +6,9 @@
 #include <math.h>
 #include "simulator.h"
 
-#define POP_SIZE 300
+#define POP_SIZE 400
 #define MUTATION 2.7f
-#define FITNESS_WEIGHT 2
+#define FITNESS_WEIGHT 3
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 1
 #define ELITISM 1
@@ -94,11 +94,12 @@ void evaluate( Individual *ind, Individual *pop )
 
 		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
 		{
-			fpga.input[ j*2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+			fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
 		}
+
 		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
 		{
-			fpga.input[ j*2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+			fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
 		}
 
 		evaluate_fpga( &fpga );
@@ -184,8 +185,6 @@ void new_pop( Individual *pop )
 		total_score += 1 + i;
 	}
 
-	order( pop );
-
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
 		if ( pop[ i ].eval[ 0 ] >= elite.eval[ 0 ] )
@@ -193,6 +192,8 @@ void new_pop( Individual *pop )
 			elite = pop[ i ];
 		}
 	}
+
+	order( pop );
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
