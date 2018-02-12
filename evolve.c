@@ -7,8 +7,8 @@
 #include "simulator.h"
 
 #define POP_SIZE 400
-#define MUTATION 2.7f
-#define FITNESS_WEIGHT 3
+#define MUTATION 1.0f
+#define FITNESS_WEIGHT 2
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 1
 #define ELITISM 1
@@ -283,7 +283,7 @@ void evolve( Individual *pop )
 
 		if ( ELITISM )
 		{
-			printf( "Elite fitness: %d\n", pop[ 0 ].eval[ 0 ] );
+			printf( "Elite fitness: %d\n", pop[ 0 ].eval[ 0 ] - 1 );
 		}
 	}
 
@@ -316,7 +316,36 @@ int main()
 		}
 	}
 
-	evolve( pop );
+	pop[ 0 ].values[ 0 ] = (unsigned char) 49;
+	pop[ 0 ].values[ 1 ] = (unsigned char) 32;
+	pop[ 0 ].values[ 2 ] = (unsigned char) 99;
+	pop[ 0 ].values[ 3 ] = (unsigned char) 32;
+	pop[ 0 ].values[ 4 ] = (unsigned char) 49;
+	pop[ 0 ].values[ 5 ] = (unsigned char) 32;
+	pop[ 0 ].values[ 6 ] = (unsigned char) 99;
+	pop[ 0 ].values[ 7 ] = (unsigned char) 32;
+	pop[ 0 ].values[ 8 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 9 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 10 ] = (unsigned char) 49;
+	pop[ 0 ].values[ 11 ] = (unsigned char) 32;
+	pop[ 0 ].values[ 12 ] = (unsigned char) 99;
+	pop[ 0 ].values[ 13 ] = (unsigned char) 32;
+	pop[ 0 ].values[ 14 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 15 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 16 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 17 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 18 ] = (unsigned char) 35;
+	pop[ 0 ].values[ 19 ] = (unsigned char) 32;
+	pop[ 0 ].values[ 20 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 21 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 22 ] = (unsigned char) 0;
+	pop[ 0 ].values[ 23 ] = (unsigned char) 0;
+
+	evaluate( &pop[ 0 ], pop );
+
+	printf( "fitness: %d\n", pop[0].eval[0] );
+
+	//evolve( pop );
 
 	return 0;
 }

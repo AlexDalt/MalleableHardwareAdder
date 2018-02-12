@@ -99,7 +99,7 @@ void tick ( FPGA *fpga )
 			}
 			else
 			{
-				fpga->cells[ i ][ j ].w_in = fpga->cells[ i + 1 ][ j ].e_val;
+				fpga->cells[ i ][ j ].w_in = fpga->cells[ i ][ j - 1 ].e_val;
 			}
 		}
 	}
