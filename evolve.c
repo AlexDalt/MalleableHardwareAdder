@@ -67,9 +67,9 @@ int ind_distance ( Individual x, Individual y )
 void evaluate( Individual *ind, Individual *pop )
 {
 	FPGA fpga;
-	int fitness = 1;
-	int size = 1;
-	int diversity = 1;
+	int fitness = 0;
+	int size = 0;
+	int diversity = 0;
 
 	bitstring_to_fpga( &fpga, ind->values );
 
@@ -161,20 +161,10 @@ void new_pop( Individual *pop )
 	int random;
 	int total_score = 0;
 	Individual new_pop[ POP_SIZE ];
-	Individual elite;
-	elite.eval[ 0 ] = 0;
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
 		total_score += 1 + i;
-	}
-
-	for ( int i = 0 ; i < POP_SIZE ; i++ )
-	{
-		if ( pop[ i ].eval[ 0 ] >= elite.eval[ 0 ] )
-		{
-			elite = pop[ i ];
-		}
 	}
 
 	order( pop );
@@ -208,11 +198,6 @@ void new_pop( Individual *pop )
 		}
 	}
 
-	if ( ELITISM )
-	{
-		new_pop[ 0 ] = elite;
-	}
-
 	for ( int  i = 0 ; i < POP_SIZE ; i++ )
 	{
 		pop[ i ] = new_pop[ i ];
@@ -225,9 +210,8 @@ void evolve( Individual *pop )
 	Individual most_fit;
 	int most_fit_score = -1;
 
-	while( most_fit.eval[ 0 ] != (FPGA_WIDTH/2 + 1) * pow( 2, FPGA_WIDTH ) + 1 )
+	while( true )
 	{
-		most_fit_score = -1;
 		int mean_fit = 0;
 		int mean_size = 0;
 		int mean_div = 0;
@@ -236,15 +220,14 @@ void evolve( Individual *pop )
 		{
 			evaluate( &(pop[ i ]), pop );
 
-			int score = FITNESS_WEIGHT * pop[ i ].eval[ 0 ] + SIZE_WEIGHT * pop[ i ].eval[ 1 ] + DIVERSITY_WEIGHT * pop[ i ].eval[ 2 ];
 			mean_fit += pop[ i ].eval[ 0 ];
 			mean_size += pop[ i ].eval[ 1 ];
 			mean_div += pop[ i ].eval[ 2 ];
 
-			if ( most_fit_score < score )
+			if ( most_fit_score <= pop[ i ].eval[ 0 ] )
 			{
 				most_fit = pop[ i ];
-				most_fit_score = score;
+				most_fit_score = pop[ i ].eval[ 0 ];
 			}
 		}
 
@@ -257,6 +240,11 @@ void evolve( Individual *pop )
 		iteration++;
 
 		new_pop( pop );
+
+		if ( ELITISM )
+		{
+			pop[ 0 ] = most_fit;
+		}
 	}
 }
 

@@ -376,6 +376,7 @@ void redraw_add_win( unsigned char *bitstring )
 	bitstring_to_fpga( &fpga, bitstring );
 
 	int num_values = pow( 2, FPGA_WIDTH );
+	int total_correct = 0;
 
 	for ( int i = 0 ; i < num_values ; i++ )
 	{
@@ -409,6 +410,7 @@ void redraw_add_win( unsigned char *bitstring )
 			wattron( add_win, COLOR_PAIR( 2 ) );
 			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d + %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 			wattroff( add_win, COLOR_PAIR( 2 ) );
+			total_correct++;
 		}
 		else
 		{
@@ -419,10 +421,11 @@ void redraw_add_win( unsigned char *bitstring )
 	}
 
 	box( add_win, 0, 0 );
+	mvwprintw ( add_win, maxy-1, (maxx-17)/2, "total correct=%2d", total_correct );
 	wrefresh( add_win );
 }
 
-void redraw_fpga_win( unsigned char *bitstring )
+void redraw_fpga_win ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div )
 {
 	int maxx, maxy;
 	FPGA fpga;
@@ -504,13 +507,15 @@ void redraw_fpga_win( unsigned char *bitstring )
 	}
 
 	box( fpga_win, 0, 0 );
+	mvwprintw( fpga_win, maxy-2, (maxx - 15)/2, "best fitness %2d", most_fit );
+	mvwprintw( fpga_win, maxy-1, (maxx - 51)/2, "iteration %4d, mean fitness %2d, mean_diversity %3d", iteration, mean_fit, mean_div );
 	wrefresh( fpga_win );
 }
 
 void redraw ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div )
 {
 	redraw_add_win( bitstring );
-	redraw_fpga_win( bitstring );
+	redraw_fpga_win( iteration, bitstring, most_fit, mean_fit, mean_div );
 	refresh();
 }
 
