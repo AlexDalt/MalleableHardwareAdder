@@ -10,7 +10,7 @@
 #define MUTATION 1.5f
 #define FITNESS_WEIGHT 5
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 1
+#define DIVERSITY_WEIGHT 2
 #define ELITISM 1
 
 typedef struct Individual {
