@@ -18,18 +18,6 @@ typedef struct Individual {
 	int eval[ 3 ];
 } Individual;
 
-void print_ind( Individual ind )
-{
-	for ( int i = 0 ; i < STRING_LENGTH_BYTES ; i++ )
-	{
-		for ( int j = 7 ; j >= 0 ; j-- )
-		{
-			printf( "%d", !!(ind.values[ i ] & ( 1 << j )) );
-		}
-		printf( " " );
-	}
-}
-
 int ind_distance ( Individual x, Individual y )
 {
 	int distance = 0;
@@ -83,6 +71,8 @@ void evaluate( Individual *ind, Individual *pop )
 	int size = 1;
 	int diversity = 1;
 
+	bitstring_to_fpga( &fpga, ind->values );
+
 	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
 		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
@@ -90,15 +80,9 @@ void evaluate( Individual *ind, Individual *pop )
 		int v1 = i & mask;
 		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
 
-		bitstring_to_fpga( &fpga, ind->values );
-
 		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
 		{
 			fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
-		}
-
-		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
-		{
 			fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
 		}
 
@@ -237,7 +221,6 @@ void new_pop( Individual *pop )
 
 void evolve( Individual *pop )
 {
-	FPGA fpga;
 	int iteration = 0;
 	Individual most_fit;
 	int most_fit_score = -1;
@@ -269,33 +252,12 @@ void evolve( Individual *pop )
 		mean_size = mean_size/POP_SIZE;
 		mean_div = mean_div/POP_SIZE;
 
-		printf( "Itteration %2d top 10 :\n", iteration );
-		for ( int i = 0 ; i < 10 ; i++ )
-		{
-			Individual ind = pop[ POP_SIZE - 1 - i ];
-			printf( "    %d : fitness %3d, size %3d, diversity %3d\n", i, ind.eval[ 0 ] - 1, FPGA_WIDTH * FPGA_HEIGHT + 1 - ind.eval[ 1 ], ind.eval[ 2 ] );
-		}
-		printf( "Population mean scores: fitness %d, size %d, diversity %d\n", mean_fit, FPGA_WIDTH * FPGA_HEIGHT + 1 - mean_size, mean_div);
+		redraw ( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div );
 
 		iteration++;
 
 		new_pop( pop );
-
-		if ( ELITISM )
-		{
-			printf( "Elite fitness: %d\n", pop[ 0 ].eval[ 0 ] - 1 );
-		}
 	}
-
-	printf("final fpga:\n");
-	bitstring_to_fpga( &fpga, most_fit.values );
-	for ( int i = 0 ; i < FPGA_WIDTH ; i++ )
-	{
-		fpga.input[ i ] = rand() & 1;
-	}
-	evaluate_fpga( &fpga );
-
-	print_ind( most_fit );
 }
 
 int main()
@@ -316,7 +278,11 @@ int main()
 		}
 	}
 
+	init_curses();
+
 	evolve( pop );
+
+	tidy_up_curses();
 
 	return 0;
 }

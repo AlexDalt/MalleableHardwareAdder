@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <ncurses.h>
+#include <curses.h>
+#include <math.h>
+
 #define FPGA_HEIGHT 4
 #define FPGA_WIDTH 4
 #define STRING_LENGTH_BYTES FPGA_WIDTH * FPGA_HEIGHT * 2
@@ -53,4 +58,8 @@ void bitstring_to_fpga ( FPGA *fpga, unsigned char *bits );
 
 void evaluate_fpga ( FPGA *fpga );
 
-//void print_fpga ( FPGA *fpga );
+void init_curses ();
+
+void redraw ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div );
+
+void tidy_up_curses();

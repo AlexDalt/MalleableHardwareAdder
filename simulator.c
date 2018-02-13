@@ -1,5 +1,34 @@
-#include <stdio.h>
 #include "simulator.h"
+WINDOW *add_win, *fpga_win;
+int row,col;
+
+WINDOW *create_win( int height, int width, int starty, int startx )
+{
+	WINDOW *win;
+	win = newwin( height, width, starty, startx );
+	box( win, 0, 0 );
+	wrefresh( win );
+
+	return win;
+}
+
+void delete_win( WINDOW* win )
+{
+	wborder( win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' );
+	wrefresh( win );
+	delwin( win );
+}
+
+WINDOW *create_subwin( WINDOW *orig, int height, int width, int starty, int startx )
+{
+	WINDOW *win;
+	win = subwin( orig, height, width, starty, startx );
+	box( win, 0, 0 );
+	wrefresh( win );
+	wrefresh( orig );
+
+	return win;
+}
 
 void bitstring_to_fpga ( FPGA *fpga, unsigned char *bits )
 {
@@ -315,4 +344,178 @@ void evaluate_fpga ( FPGA *fpga )
 		tick ( fpga );
 		tock ( fpga );
 	}
+}
+
+void init_curses ()
+{
+	initscr();
+	start_color();
+	cbreak();
+	noecho();
+	curs_set( 0 );
+	getmaxyx( stdscr, row, col );
+
+	refresh();
+
+	init_pair( 1, COLOR_BLACK, COLOR_RED );
+	init_pair( 2, COLOR_BLACK, COLOR_GREEN );
+
+	add_win = create_win( row, col/4, 0, 0 );
+	fpga_win = create_win( row, 3*col/4, 0, col/4 );
+
+	refresh();
+}
+
+void redraw_add_win( unsigned char *bitstring )
+{
+	int maxx, maxy;
+	getmaxyx( add_win, maxy, maxx );
+	werase( add_win );
+
+	FPGA fpga;
+	bitstring_to_fpga( &fpga, bitstring );
+
+	int num_values = pow( 2, FPGA_WIDTH );
+
+	for ( int i = 0 ; i < num_values ; i++ )
+	{
+		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
+		int v1 = i & mask;
+		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+
+		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+		{
+			fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+			fpga.input[ j * 2 + 1 ] = (v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+		}
+
+		evaluate_fpga( &fpga );
+
+		int correct = 1;
+		int num_correct = FPGA_WIDTH/2 + 1;
+		int sum = v1 + v2;
+
+		for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+		{
+			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val != (( sum >> j ) & 1 ) )
+			{
+				correct = 0;
+				num_correct--;
+			}
+		}
+
+		if ( correct )
+		{
+			wattron( add_win, COLOR_PAIR( 2 ) );
+			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d + %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			wattroff( add_win, COLOR_PAIR( 2 ) );
+		}
+		else
+		{
+			wattron( add_win, COLOR_PAIR( 1 ) );
+			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d + %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			wattroff( add_win, COLOR_PAIR( 1 ) );
+		}
+	}
+
+	box( add_win, 0, 0 );
+	wrefresh( add_win );
+}
+
+void redraw_fpga_win( unsigned char *bitstring )
+{
+	int maxx, maxy;
+	FPGA fpga;
+	getmaxyx( fpga_win, maxy, maxx );
+	werase( fpga_win );
+
+	bitstring_to_fpga( &fpga, bitstring );
+
+	int cell_x = maxx/(FPGA_WIDTH + 2);
+	int cell_y = maxy/(FPGA_HEIGHT + 2);
+
+	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
+	{
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+		{
+			switch ( fpga.cells[ i ][ j ].gate )
+			{
+				case OFF:
+					break;
+				case NOT:
+					mvwprintw( fpga_win, cell_y * ( i + 1 ) + cell_y/2, cell_x * ( j + 1 ) + (cell_x - 3)/2, "NOT" );
+					break;
+				case OR:
+					mvwprintw( fpga_win, cell_y * ( i + 1 ) + cell_y/2, cell_x * ( j + 1 ) + (cell_x - 2)/2, "OR" );
+					break;
+				case AND:
+					mvwprintw( fpga_win, cell_y * ( i + 1 ) + cell_y/2, cell_x * ( j + 1 ) + (cell_x - 3)/2, "AND" );
+					break;
+				case NAND:
+					mvwprintw( fpga_win, cell_y * ( i + 1 ) + cell_y/2, cell_x * ( j + 1 ) + (cell_x - 4)/2, "NAND" );
+					break;
+				case NOR:
+					mvwprintw( fpga_win, cell_y * ( i + 1 ) + cell_y/2, cell_x * ( j + 1 ) + (cell_x - 3)/2, "NOR" );
+					break;
+				case XOR:
+					mvwprintw( fpga_win, cell_y * ( i + 1 ) + cell_y/2, cell_x * ( j + 1 ) + (cell_x - 3)/2, "XOR" );
+					break;
+				case XNOR:
+					mvwprintw( fpga_win, cell_y * ( i + 1 ) + cell_y/2, cell_x * ( j + 1 ) + (cell_x - 4)/2, "XNOR" );
+					break;
+			}
+		}
+	}
+
+	for ( int i = 0 ; i < FPGA_WIDTH + 1 ; i++ )
+	{
+		mvwvline( fpga_win, cell_y, cell_x * ( i + 1 ), ACS_VLINE, cell_y * FPGA_HEIGHT );
+	}
+	for ( int i = 0 ; i < FPGA_HEIGHT + 1 ; i++ )
+	{
+		mvwhline( fpga_win, cell_y * (i + 1), cell_x, ACS_HLINE, cell_x * FPGA_WIDTH + 1 );
+	}
+
+	for ( int i = 0 ; i < FPGA_WIDTH ; i++ )
+	{
+		if ( i % 2 == 0 )
+		{
+			mvwprintw( fpga_win, cell_y - 2, cell_x * ( i + 1 ) + (cell_x-3)/2, "y_%d", FPGA_WIDTH/2 - i/2 - 1);
+		}
+		else
+		{
+			mvwprintw( fpga_win, cell_y - 2, cell_x * ( i + 1 ) + (cell_x-3)/2, "x_%d", FPGA_WIDTH/2 - i/2 - 1);
+		}
+		mvwprintw( fpga_win, cell_y - 1, cell_x * ( i + 1 ) + cell_x/2, "|" );
+		mvwprintw( fpga_win, cell_y, cell_x * ( i + 1 ) + cell_x/2, "V" );
+		if ( i >= FPGA_WIDTH/2 - 1 )
+		{
+			mvwprintw( fpga_win, cell_y * (FPGA_HEIGHT + 1), cell_x * ( i + 1 ) + cell_x/2, "|" );
+			mvwprintw( fpga_win, cell_y * (FPGA_HEIGHT + 1) + 1, cell_x * ( i + 1 ) + cell_x/2, "V" );
+			if ( i >= FPGA_WIDTH/2 )
+			{
+			mvwprintw( fpga_win, cell_y * (FPGA_HEIGHT + 1) + 2, cell_x * ( i + 1 ) + (cell_x - 3)/2, "b_%d", FPGA_WIDTH - i - 1 );
+			}
+			else
+			{
+				mvwprintw( fpga_win, cell_y * (FPGA_HEIGHT + 1) + 2, cell_x * ( i + 1 ) + cell_x/2, "c" );
+			}
+		}
+	}
+
+	box( fpga_win, 0, 0 );
+	wrefresh( fpga_win );
+}
+
+void redraw ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div )
+{
+	redraw_add_win( bitstring );
+	redraw_fpga_win( bitstring );
+	refresh();
+}
+
+void tidy_up_curses ()
+{
+	delete_win( add_win );
+	endwin();
 }
