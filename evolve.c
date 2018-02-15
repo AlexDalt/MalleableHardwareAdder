@@ -8,12 +8,12 @@
 
 #define POP_SIZE 400
 #define MUTATION 1.5f
-#define FITNESS_WEIGHT 3
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 2
+#define DIVERSITY_WEIGHT 4
 #define ELITISM 1
-#define ADD_WEIGHT 1
+#define ADD_WEIGHT 2
 #define SUB_WEIGHT 1
+#define FITNESS_WEIGHT 10 / (ADD_WEIGHT + SUB_WEIGHT)
 
 typedef struct Individual {
 	unsigned char values[ STRING_LENGTH_BYTES ];
@@ -253,7 +253,7 @@ void evolve( Individual *pop )
 		mean_size = mean_size/POP_SIZE;
 		mean_div = mean_div/POP_SIZE;
 
-		redraw ( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div );
+		redraw ( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, ADD_WEIGHT, SUB_WEIGHT );
 
 		iteration++;
 
