@@ -1,5 +1,5 @@
 #include "simulator.h"
-WINDOW *add_win, *fpga_win;
+WINDOW *add_win, *fpga_win, *sub_win;
 int row,col;
 
 WINDOW *create_win( int height, int width, int starty, int startx )
@@ -122,7 +122,11 @@ void tick ( FPGA *fpga )
 				fpga->cells[ i ][ j ].s_in = fpga->cells[ i + 1 ][ j ].n_val;
 			}
 
-			if ( j == 0 )
+			if ( j == 0 &&  i == 0 )
+			{
+				fpga->cells[ i ][ j ].w_in = fpga->control;
+			}
+			else if ( j == 0 )
 			{
 				fpga->cells[ i ][ j ].w_in = 2;
 			}
@@ -361,7 +365,8 @@ void init_curses ()
 	init_pair( 2, COLOR_BLACK, COLOR_GREEN );
 
 	add_win = create_win( row, col/4, 0, 0 );
-	fpga_win = create_win( row, 3*col/4, 0, col/4 );
+	fpga_win = create_win( row, 2*col/4, 0, col/4 );
+	sub_win = create_win( row, col/4, 0, 3*col/4 );
 
 	refresh();
 }
@@ -390,6 +395,7 @@ void redraw_add_win( unsigned char *bitstring )
 			fpga.input[ j * 2 + 1 ] = (v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
 		}
 
+		fpga.control = 0;
 		evaluate_fpga( &fpga );
 
 		int correct = 1;
@@ -422,6 +428,7 @@ void redraw_add_win( unsigned char *bitstring )
 
 	box( add_win, 0, 0 );
 	mvwprintw ( add_win, maxy-1, (maxx-17)/2, "total correct=%2d", total_correct );
+	mvwprintw ( add_win, 0, (maxx-3)/2, "ADD", total_correct );
 	wrefresh( add_win );
 }
 
@@ -512,10 +519,72 @@ void redraw_fpga_win ( int iteration, unsigned char *bitstring, int most_fit, in
 	wrefresh( fpga_win );
 }
 
+void redraw_sub_win( unsigned char *bitstring )
+{
+	int maxx, maxy;
+	getmaxyx( sub_win, maxy, maxx );
+	werase( sub_win );
+
+	FPGA fpga;
+	bitstring_to_fpga( &fpga, bitstring );
+
+	int num_values = pow( 2, FPGA_WIDTH );
+	int total_correct = 0;
+
+	for ( int i = 0 ; i < num_values ; i++ )
+	{
+		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
+		int v1 = i & mask;
+		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+
+		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+		{
+			fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+			fpga.input[ j * 2 + 1 ] = (v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+		}
+
+		fpga.control = 1;
+		evaluate_fpga( &fpga );
+
+		int correct = 1;
+		int num_correct = FPGA_WIDTH/2 + 1;
+		int dif = v1 - v2;
+
+		for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+		{
+			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val != (( dif >> j ) & 1 ) )
+			{
+				correct = 0;
+				num_correct--;
+			}
+		}
+
+		if ( correct )
+		{
+			wattron( sub_win, COLOR_PAIR( 2 ) );
+			mvwprintw( sub_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			wattroff( sub_win, COLOR_PAIR( 2 ) );
+			total_correct++;
+		}
+		else
+		{
+			wattron( sub_win, COLOR_PAIR( 1 ) );
+			mvwprintw( sub_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			wattroff( sub_win, COLOR_PAIR( 1 ) );
+		}
+	}
+
+	box( sub_win, 0, 0 );
+	mvwprintw ( sub_win, maxy-1, (maxx-17)/2, "total correct=%2d", total_correct );
+	mvwprintw ( sub_win, 0, (maxx-3)/2, "SUB", total_correct );
+	wrefresh( sub_win );
+}
+
 void redraw ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div )
 {
 	redraw_add_win( bitstring );
 	redraw_fpga_win( iteration, bitstring, most_fit, mean_fit, mean_div );
+	redraw_sub_win( bitstring );
 	refresh();
 }
 

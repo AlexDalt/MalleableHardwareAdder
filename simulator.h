@@ -3,7 +3,7 @@
 #include <curses.h>
 #include <math.h>
 
-#define FPGA_HEIGHT 3
+#define FPGA_HEIGHT 4
 #define FPGA_WIDTH 4
 #define STRING_LENGTH_BYTES FPGA_WIDTH * FPGA_HEIGHT * 2
 
@@ -38,6 +38,7 @@ typedef struct {
 
 typedef struct {
 	Cell cells[ FPGA_HEIGHT ][ FPGA_WIDTH ];
+	unsigned char control;
 	unsigned char input[ FPGA_WIDTH ];
 } FPGA;
 

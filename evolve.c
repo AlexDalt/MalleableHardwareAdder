@@ -8,10 +8,12 @@
 
 #define POP_SIZE 400
 #define MUTATION 1.5f
-#define FITNESS_WEIGHT 5
+#define FITNESS_WEIGHT 3
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 2
 #define ELITISM 1
+#define ADD_WEIGHT 1
+#define SUB_WEIGHT 1
 
 typedef struct Individual {
 	unsigned char values[ STRING_LENGTH_BYTES ];
@@ -79,6 +81,8 @@ void evaluate( Individual *ind, Individual *pop )
 
 		int v1 = i & mask;
 		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+		int sum = v1 + v2;
+		int dif = v1 - v2;
 
 		for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
 		{
@@ -86,17 +90,31 @@ void evaluate( Individual *ind, Individual *pop )
 			fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
 		}
 
+		int add_fit = 0;
+		int sub_fit = 0;
+		fpga.control = 0;
 		evaluate_fpga( &fpga );
-
-		int sum = v1 + v2;
 
 		for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
 		{
 			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( sum >> j ) & 1) )
 			{
-				fitness++;
+				add_fit++;
 			}
 		}
+
+		fpga.control = 1;
+		evaluate_fpga( &fpga );
+
+		for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+		{
+			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( dif >> j ) & 1) )
+			{
+				sub_fit++;
+			}
+		}
+
+		fitness += ADD_WEIGHT * add_fit + SUB_WEIGHT * sub_fit;
 	}
 
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
