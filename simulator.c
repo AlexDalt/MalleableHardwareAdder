@@ -418,7 +418,7 @@ void redraw_add_win( unsigned char *bitstring )
 			wattroff( add_win, COLOR_PAIR( 2 ) );
 			total_correct++;
 		}
-		else if ( num_correct <= FPGA_WIDTH/4 )
+		else if ( num_correct == 0 )
 		{
 			wattron( add_win, COLOR_PAIR( 1 ) );
 			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
@@ -570,7 +570,7 @@ void redraw_sub_win( unsigned char *bitstring )
 			wattroff( sub_win, COLOR_PAIR( 2 ) );
 			total_correct++;
 		}
-		else if ( num_correct <= FPGA_WIDTH/4 )
+		else if ( num_correct == 0 )
 		{
 			wattron( sub_win, COLOR_PAIR( 1 ) );
 			mvwprintw( sub_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
