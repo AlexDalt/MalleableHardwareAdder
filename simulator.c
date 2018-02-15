@@ -414,15 +414,19 @@ void redraw_add_win( unsigned char *bitstring )
 		if ( correct )
 		{
 			wattron( add_win, COLOR_PAIR( 2 ) );
-			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d + %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 			wattroff( add_win, COLOR_PAIR( 2 ) );
 			total_correct++;
 		}
-		else
+		else if ( num_correct <= FPGA_WIDTH/4 )
 		{
 			wattron( add_win, COLOR_PAIR( 1 ) );
-			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d + %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 			wattroff( add_win, COLOR_PAIR( 1 ) );
+		}
+		else
+		{
+			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 		}
 	}
 
@@ -566,11 +570,15 @@ void redraw_sub_win( unsigned char *bitstring )
 			wattroff( sub_win, COLOR_PAIR( 2 ) );
 			total_correct++;
 		}
-		else
+		else if ( num_correct <= FPGA_WIDTH/4 )
 		{
 			wattron( sub_win, COLOR_PAIR( 1 ) );
 			mvwprintw( sub_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 			wattroff( sub_win, COLOR_PAIR( 1 ) );
+		}
+		else
+		{
+			mvwprintw( sub_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 		}
 	}
 
