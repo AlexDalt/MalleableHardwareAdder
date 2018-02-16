@@ -12,7 +12,7 @@
 #define DIVERSITY_WEIGHT 4
 #define ELITISM 1
 #define ADD_WEIGHT 1
-#define SUB_WEIGHT 0
+#define SUB_WEIGHT 1
 #define FITNESS_WEIGHT 10 / (ADD_WEIGHT + SUB_WEIGHT)
 
 typedef struct Individual {
