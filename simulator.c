@@ -414,19 +414,19 @@ void redraw_add_win( unsigned char *bitstring, int add_weight )
 		if ( correct )
 		{
 			wattron( add_win, COLOR_PAIR( 2 ) );
-			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d + %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 			wattroff( add_win, COLOR_PAIR( 2 ) );
 			total_correct++;
 		}
 		else if ( num_correct == 0 )
 		{
 			wattron( add_win, COLOR_PAIR( 1 ) );
-			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d + %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 			wattroff( add_win, COLOR_PAIR( 1 ) );
 		}
 		else
 		{
-			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d - %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
+			mvwprintw( add_win, (maxy-num_values)/2 + i, (maxx - 24)/2, "%d + %d : %d/%d bits correct", v1, v2, num_correct, FPGA_WIDTH/2 + 1 );
 		}
 	}
 
@@ -621,11 +621,14 @@ void redraw_fpga_win ( int iteration, unsigned char *bitstring, int most_fit, in
 							mvwprintw( fpga_win, cell_y * ( i + 1 ) + cell_y/2, cell_x * ( j + 1 ) + cell_x/2 + 1, "F" );
 							break;
 					}
-					//print g_in2
 				}
 			}
 		}
 	}
+
+	mvwprintw( fpga_win, cell_y + cell_y/2, cell_x, ">" );
+	mvwprintw( fpga_win, cell_y + cell_y/2, cell_x - 1, "-" );
+	mvwprintw( fpga_win, cell_y + cell_y/2, cell_x - 8, "ADD/SUB" );
 
 	for ( int i = 0 ; i < FPGA_WIDTH ; i++ )
 	{

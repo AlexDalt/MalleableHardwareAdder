@@ -1,0 +1,4 @@
+set terminal png
+set output "graph.png"
+plot "log.dat" using 2 title "mean fitness" with lines,\
+"log.dat" using 3 title "best case fitness" with lines

@@ -11,14 +11,24 @@
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 4
 #define ELITISM 1
-#define ADD_WEIGHT 2
-#define SUB_WEIGHT 1
+#define ADD_WEIGHT 1
+#define SUB_WEIGHT 0
 #define FITNESS_WEIGHT 10 / (ADD_WEIGHT + SUB_WEIGHT)
 
 typedef struct Individual {
 	unsigned char values[ STRING_LENGTH_BYTES ];
 	int eval[ 3 ];
 } Individual;
+
+void log_data( int iteration, int mean_fit, int most_fit )
+{
+	FILE *fp = fopen( "log.dat", "a" );
+	if ( fp != NULL )
+	{
+		fprintf( fp, "%d    %d    %d\n", iteration, mean_fit, most_fit );
+		fclose( fp );
+	}
+}
 
 int ind_distance ( Individual x, Individual y )
 {
@@ -253,7 +263,8 @@ void evolve( Individual *pop )
 		mean_size = mean_size/POP_SIZE;
 		mean_div = mean_div/POP_SIZE;
 
-		redraw ( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, ADD_WEIGHT, SUB_WEIGHT );
+		redraw( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, ADD_WEIGHT, SUB_WEIGHT );
+		log_data( iteration, mean_fit, most_fit.eval[ 0 ] );
 
 		iteration++;
 
