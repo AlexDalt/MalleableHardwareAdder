@@ -352,6 +352,17 @@ void evaluate_fpga ( FPGA *fpga )
 		output[ i ] = 3;
 	}
 
+	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
+	{
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
+		{
+			fpga->cells[ i ][ j ].n_val = 2;
+			fpga->cells[ i ][ j ].e_val = 2;
+			fpga->cells[ i ][ j ].w_val = 2;
+			fpga->cells[ i ][ j ].s_val = 2;
+		}
+	}
+
 	while ( changed )
 	{
 		tick ( fpga );
@@ -360,7 +371,8 @@ void evaluate_fpga ( FPGA *fpga )
 		changed = 0;
 		for ( int i = 0 ; i < FPGA_WIDTH ; i++ )
 		{
-			if ( output[ i ] != fpga->cells[ FPGA_HEIGHT - 1 ][ i ].s_val )
+			if ( output[ i ] != fpga->cells[ FPGA_HEIGHT - 1 ][ i ].s_val
+					|| fpga->cells[ FPGA_HEIGHT - 1 ][ i ].s_val == 2 )
 			{
 				changed = 1;
 			}
@@ -369,7 +381,7 @@ void evaluate_fpga ( FPGA *fpga )
 
 		iteration++;
 
-		if ( iteration == 100 )
+		if ( iteration == 64 )
 		{
 			break;
 		}

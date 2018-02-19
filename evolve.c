@@ -268,13 +268,6 @@ void evolve( Individual *pop )
 		redraw( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, add_weight, sub_weight );
 		log_data( iteration, mean_fit, most_fit.eval[ 0 ] );
 
-		if ( iteration == 3000 )
-		{
-			add_weight = 0;
-			sub_weight = 1;
-			most_fit_score = -1;
-		}
-
 		iteration++;
 
 		new_pop( pop );
@@ -284,6 +277,7 @@ void evolve( Individual *pop )
 			pop[ 0 ] = most_fit;
 		}
 
+		most_fit_score = -1;
 	}
 }
 
