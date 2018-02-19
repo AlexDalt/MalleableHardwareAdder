@@ -343,10 +343,36 @@ void tock ( FPGA *fpga )
 
 void evaluate_fpga ( FPGA *fpga )
 {
-	for ( int i = 0 ; i < FPGA_WIDTH * FPGA_HEIGHT ; i++ )
+	int changed = 1;
+	int iteration = 0;
+	unsigned char output[ FPGA_WIDTH ];
+
+	for ( int i = 0 ; i < FPGA_WIDTH ; i++ )
+	{
+		output[ i ] = 3;
+	}
+
+	while ( changed )
 	{
 		tick ( fpga );
 		tock ( fpga );
+
+		changed = 0;
+		for ( int i = 0 ; i < FPGA_WIDTH ; i++ )
+		{
+			if ( output[ i ] != fpga->cells[ FPGA_HEIGHT - 1 ][ i ].s_val )
+			{
+				changed = 1;
+			}
+			output[ i ] = fpga->cells[ FPGA_HEIGHT - 1 ][ i ].s_val;
+		}
+
+		iteration++;
+
+		if ( iteration == 100 )
+		{
+			break;
+		}
 	}
 }
 
