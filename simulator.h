@@ -6,7 +6,7 @@
 #define FPGA_HEIGHT 4
 #define FPGA_WIDTH 4
 #define STRING_LENGTH_BYTES FPGA_WIDTH * FPGA_HEIGHT * 2
-#define FAULT 1
+#define FAULT_NUM 1
 
 typedef enum {
 	OFF,
@@ -48,7 +48,8 @@ typedef struct {
 	unsigned char control;
 	unsigned char input[ FPGA_WIDTH ];
 
-	Fault fault;
+	Fault faults[ FAULT_NUM ];
+	int active_fault[ FAULT_NUM ];
 } FPGA;
 
 /*
@@ -64,12 +65,12 @@ typedef struct {
  * 		- the most significant bit is reserved
  */
 
-void bitstring_to_fpga ( FPGA *fpga, unsigned char *bits, Fault fault );
+void bitstring_to_fpga ( FPGA *fpga, unsigned char *bits );
 
 void evaluate_fpga ( FPGA *fpga );
 
 void init_curses ();
 
-void redraw ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight, Fault fault );
+void redraw ( int iteration, FPGA fpga, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight );
 
 void tidy_up_curses();

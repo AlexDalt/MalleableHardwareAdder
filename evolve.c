@@ -18,6 +18,7 @@ int add_weight, sub_weight;
 typedef struct Individual {
 	unsigned char values[ STRING_LENGTH_BYTES ];
 	int eval[ 3 ];
+	FPGA fpga;
 } Individual;
 
 void log_data( int iteration, int mean_fit, int most_fit )
@@ -30,13 +31,11 @@ void log_data( int iteration, int mean_fit, int most_fit )
 	}
 }
 
-int ind_distance ( Individual x, Individual y, Fault f )
+int ind_distance ( Individual x, Individual y )
 {
 	int distance = 0;
-	FPGA fpga_x, fpga_y;
-
-	bitstring_to_fpga( &fpga_x, x.values, f );
-	bitstring_to_fpga( &fpga_y, y.values, f );
+	FPGA fpga_x = x.fpga;
+	FPGA fpga_y = y.fpga;
 
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
@@ -76,14 +75,12 @@ int ind_distance ( Individual x, Individual y, Fault f )
 	return distance;
 }
 
-void evaluate( Individual *ind, Individual *pop, Fault fault )
+void evaluate( Individual *ind, Individual *pop )
 {
-	FPGA fpga;
+	FPGA fpga = ind->fpga;
 	int fitness = 0;
 	int size = 0;
 	int diversity = 0;
-
-	bitstring_to_fpga( &fpga, ind->values, fault );
 
 	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
@@ -141,7 +138,7 @@ void evaluate( Individual *ind, Individual *pop, Fault fault )
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
 
-		int distance = ind_distance( *ind, pop[ i ], fault );
+		int distance = ind_distance( *ind, pop[ i ] );
 		diversity += pow ( distance, 2 );
 	}
 
@@ -229,6 +226,7 @@ void new_pop( Individual *pop )
 	for ( int  i = 0 ; i < POP_SIZE ; i++ )
 	{
 		pop[ i ] = new_pop[ i ];
+		bitstring_to_fpga( &pop[ i ].fpga, pop[ i ].values );
 	}
 }
 
@@ -240,51 +238,56 @@ void evolve( Individual *pop )
 	add_weight = 1;
 	sub_weight = 0;
 
-	Fault fault, n_fault;
-	fault.x = rand() % FPGA_WIDTH;
-	fault.y = rand() % FPGA_HEIGHT;
-	fault.dir = rand() % 4;
-	if ( fault.x == 0 && fault.dir == WEST )
+	Fault faults[ FAULT_NUM ];
+	for ( int i = 0 ; i < FAULT_NUM ; i++ )
 	{
-		fault.dir = EAST;
+		faults[ i ].x = rand() % FPGA_WIDTH;
+		faults[ i ].y = rand() % FPGA_HEIGHT;
+		faults[ i ].dir = rand() % 4;
+		if ( faults[ i ].x == 0 && faults[ i ].dir == WEST )
+		{
+			faults[ i ].dir = EAST;
+		}
+		if ( faults[ i ].y == 0 && faults[ i ].dir == NORTH )
+		{
+			faults[ i ].dir = SOUTH;
+		}
+		if ( faults[ i ].x == FPGA_WIDTH - 1 && faults[ i ].dir == EAST )
+		{
+			faults[ i ].dir = WEST;
+		}
+		if ( faults[ i ].y == FPGA_HEIGHT - 1 && faults[ i ].dir == SOUTH )
+		{
+			faults[ i ].dir = NORTH;
+		}
+		faults[ i ].value = rand() % 3;
 	}
-	if ( fault.y == 0 && fault.dir == NORTH )
-	{
-		fault.dir = SOUTH;
-	}
-	if ( fault.x == FPGA_WIDTH - 1 && fault.dir == EAST )
-	{
-		fault.dir = WEST;
-	}
-	if ( fault.y == FPGA_HEIGHT - 1 && fault.dir == SOUTH )
-	{
-		fault.dir = NORTH;
-	}
-	fault.value = rand() % 3;
-	n_fault.x = 0;
-	n_fault.y = 1;
-	n_fault.dir = 3;
-	n_fault.value = 2;
 
 	while( true )
 	{
 		int mean_fit = 0;
 		int mean_size = 0;
 		int mean_div = 0;
-		Fault round_fault;
 
-		if ( iteration % 1000 < 500 )
+		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
-			round_fault = n_fault;
-		}
-		else
-		{
-			round_fault = fault;
+			for ( int j = 0 ; j < FAULT_NUM ; j++ )
+			{
+				if ( iteration % 1000 < 500 )
+				{
+					pop[ i ].fpga.active_fault[ j ] = 0;
+				}
+				else
+				{
+					pop[ i ].fpga.active_fault[ j ] = 1;
+				}
+				pop[ i ].fpga.faults[ j ] = faults[ j ];
+			}
 		}
 
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
-			evaluate( &(pop[ i ]), pop, round_fault );
+			evaluate( &(pop[ i ]), pop );
 
 			mean_fit += pop[ i ].eval[ 0 ];
 			mean_size += pop[ i ].eval[ 1 ];
@@ -301,7 +304,7 @@ void evolve( Individual *pop )
 		mean_size = mean_size/POP_SIZE;
 		mean_div = mean_div/POP_SIZE;
 
-		redraw( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, add_weight, sub_weight, round_fault );
+		redraw( iteration, most_fit.fpga, most_fit.eval[ 0 ], mean_fit, mean_div, add_weight, sub_weight );
 		log_data( iteration, mean_fit, most_fit.eval[ 0 ] );
 
 		iteration++;
