@@ -576,7 +576,7 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 			if ( j != 0 )
 			{
 				mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1), "X" );
-				switch ( fpga.cells[ i ][ j ].e_out )
+				switch ( fpga.cells[ i ][ j ].w_out )
 				{
 					case NORTH:
 						mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "N" );
@@ -618,7 +618,7 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 			}
 			if ( j != FPGA_HEIGHT - 1 )
 			{
-				switch ( fpga.cells[ i ][ j ].w_out )
+				switch ( fpga.cells[ i ][ j ].e_out )
 				{
 					case NORTH:
 						mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 2) - 1, "N" );
@@ -687,31 +687,32 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 
 	for ( int i = 0 ; i < FAULT_NUM ; i++ )
 	{
+		Fault f = fpga.faults[ i ];
 		if ( fpga.active_fault[ i ] )
 		{
 			wattron( fpga_win, COLOR_PAIR( 1 ) );
 			switch ( fpga.faults[ i ].dir )
 			{
 				case NORTH:
-					y = cell_y * (fpga.faults[ i ].y + 1) + 1;
-					x = cell_x * (fpga.faults[ i ].x + 1) + cell_x/2;
+					y = cell_y * (f.y + 1) + 1;
+					x = cell_x * (f.x + 1) + cell_x/2;
 					break;
 				case EAST:
-					y = cell_y * (fpga.faults[ i ].y + 1) + cell_y/2;
-					x = cell_x * (fpga.faults[ i ].x + 1) + 1;
+					y = cell_y * (f.y + 1) + cell_y/2;
+					x = cell_x * (f.x + 2) - 1;
 					break;
 				case SOUTH:
-					y = cell_y * (fpga.faults[ i ].y + 2) - 1;
-					x = cell_x * (fpga.faults[ i ].x + 1) + cell_x/2;
+					y = cell_y * (f.y + 2) - 1;
+					x = cell_x * (f.x + 1) + cell_x/2;
 					break;
 				case WEST:
-					y = cell_y * (fpga.faults[ i ].y + 1) + cell_y/2;
-					x = cell_x * (fpga.faults[ i ].x + 2) - 1;
+					y = cell_y * (f.y + 1) + cell_y/2;
+					x = cell_x * (f.x + 1) + 1;
 					break;
 				default:
 					break;
 			}
-			mvwprintw( fpga_win, y, x, "%d", fpga.faults[ i ].value );
+			mvwprintw( fpga_win, y, x, "%d", f.value );
 			wattroff( fpga_win, COLOR_PAIR( 1 ) );
 		}
 	}
