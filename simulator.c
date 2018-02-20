@@ -30,8 +30,9 @@ WINDOW *create_subwin( WINDOW *orig, int height, int width, int starty, int star
 	return win;
 }
 
-void bitstring_to_fpga ( FPGA *fpga, unsigned char *bits )
+void bitstring_to_fpga ( FPGA *fpga, unsigned char *bits, Fault fault )
 {
+	fpga->fault = fault;
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
 		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
@@ -339,6 +340,28 @@ void tock ( FPGA *fpga )
 			}
 		}
 	}
+
+	if ( FAULT )
+	{
+		Fault f = fpga->fault;
+		switch ( f.dir )
+		{
+			case NORTH:
+				fpga->cells[ f.y ][ f.x ].n_out = f.value;
+				break;
+			case EAST:
+				fpga->cells[ f.y ][ f.x ].e_out = f.value;
+				break;
+			case SOUTH:
+				fpga->cells[ f.y ][ f.x ].s_out = f.value;
+				break;
+			case WEST:
+				fpga->cells[ f.y ][ f.x ].w_out = f.value;
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 void evaluate_fpga ( FPGA *fpga )
@@ -409,14 +432,14 @@ void init_curses ()
 	refresh();
 }
 
-void redraw_add_win( unsigned char *bitstring, int add_weight )
+void redraw_add_win( unsigned char *bitstring, int add_weight, Fault fault )
 {
 	int maxx, maxy;
 	getmaxyx( add_win, maxy, maxx );
 	werase( add_win );
 
 	FPGA fpga;
-	bitstring_to_fpga( &fpga, bitstring );
+	bitstring_to_fpga( &fpga, bitstring, fault );
 
 	int num_values = pow( 2, FPGA_WIDTH );
 	int total_correct = 0;
@@ -474,14 +497,14 @@ void redraw_add_win( unsigned char *bitstring, int add_weight )
 	wrefresh( add_win );
 }
 
-void redraw_fpga_win ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div )
+void redraw_fpga_win ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div, Fault fault )
 {
 	int maxx, maxy;
 	FPGA fpga;
 	getmaxyx( fpga_win, maxy, maxx );
 	werase( fpga_win );
 
-	bitstring_to_fpga( &fpga, bitstring );
+	bitstring_to_fpga( &fpga, bitstring, fault );
 
 	int cell_x = maxx/(FPGA_WIDTH + 2);
 	int cell_y = maxy/(FPGA_HEIGHT + 2);
@@ -535,70 +558,103 @@ void redraw_fpga_win ( int iteration, unsigned char *bitstring, int most_fit, in
 			if ( i != 0 )
 			{
 				mvwprintw( fpga_win, cell_y * (i + 1), cell_x * (j + 1) + cell_x/2, "X" );
-				switch ( fpga.cells[ i ][ j ].n_out )
+				if ( fault.y == i && fault.x == j && fault.dir == NORTH )
 				{
-					case NORTH:
-						mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "N" );
-						break;
-					case EAST:
-						mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "E" );
-						break;
-					case SOUTH:
-						mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "S" );
-						break;
-					case WEST:
-						mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "W" );
-						break;
-					case F:
-						mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "F" );
-						break;
+					wattron( fpga_win, COLOR_PAIR(1) );
+					mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "%d", fault.value );
+					wattroff( fpga_win, COLOR_PAIR(1) );
+				}
+				else
+				{
+					switch ( fpga.cells[ i ][ j ].n_out )
+					{
+						case NORTH:
+							mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "N" );
+							break;
+						case EAST:
+							mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "E" );
+							break;
+						case SOUTH:
+							mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "S" );
+							break;
+						case WEST:
+							mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "W" );
+							break;
+						case F:
+							mvwprintw( fpga_win, cell_y * (i + 1) + 1, cell_x * (j + 1) + cell_x/2, "F" );
+							break;
+					}
 				}
 			}
 			if ( j != 0 )
 			{
 				mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1), "X" );
-				switch ( fpga.cells[ i ][ j ].w_out )
+				if ( fault.y == i && fault.x == j && fault.dir == WEST )
 				{
-					case NORTH:
-						mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "N" );
-						break;
-					case EAST:
-						mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "E" );
-						break;
-					case SOUTH:
-						mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "S" );
-						break;
-					case WEST:
-						mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "W" );
-						break;
-					case F:
-						mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "F" );
-						break;
+					wattron( fpga_win, COLOR_PAIR(1) );
+					mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "%d", fault.value );
+					wattroff( fpga_win, COLOR_PAIR(1) );
+				}
+				else
+				{
+					switch ( fpga.cells[ i ][ j ].w_out )
+					{
+						case NORTH:
+							mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "N" );
+							break;
+						case EAST:
+							mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "E" );
+							break;
+						case SOUTH:
+							mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "S" );
+							break;
+						case WEST:
+							mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "W" );
+							break;
+						case F:
+							mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 1) + 1, "F" );
+							break;
+					}
 				}
 			}
 			if ( i != FPGA_WIDTH - 1 )
 			{
-				switch ( fpga.cells[ i ][ j ].s_out )
+				if ( fault.y == i && fault.x == j && fault.dir == SOUTH )
 				{
-					case NORTH:
-						mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "N" );
-						break;
-					case EAST:
-						mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "E" );
-						break;
-					case SOUTH:
-						mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "S" );
-						break;
-					case WEST:
-						mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "W" );
-						break;
-					case F:
-						mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "F" );
-						break;
+					wattron( fpga_win, COLOR_PAIR(1) );
+					mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "%d", fault.value );
+					wattroff( fpga_win, COLOR_PAIR(1) );
+				}
+				else
+				{
+					switch ( fpga.cells[ i ][ j ].s_out )
+					{
+						case NORTH:
+							mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "N" );
+							break;
+						case EAST:
+							mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "E" );
+							break;
+						case SOUTH:
+							mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "S" );
+							break;
+						case WEST:
+							mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "W" );
+							break;
+						case F:
+							mvwprintw( fpga_win, cell_y * (i + 2) - 1, cell_x * (j + 1) + cell_x/2, "F" );
+							break;
+					}
 				}
 			}
 			if ( j != FPGA_HEIGHT - 1 )
 			{
+				if ( fault.y == i && fault.x == j && fault.dir == WEST )
+				{
+					wattron( fpga_win, COLOR_PAIR(1) );
+					mvwprintw( fpga_win, cell_y * (i + 1) + cell_y/2, cell_x * (j + 2) - 1, "%d", fault.value );
+					wattroff( fpga_win, COLOR_PAIR(1) );
+				}
 				switch ( fpga.cells[ i ][ j ].w_out )
 				{
 					case NORTH:
@@ -701,14 +757,14 @@ void redraw_fpga_win ( int iteration, unsigned char *bitstring, int most_fit, in
 	wrefresh( fpga_win );
 }
 
-void redraw_sub_win( unsigned char *bitstring, int sub_weight )
+void redraw_sub_win( unsigned char *bitstring, int sub_weight, Fault fault )
 {
 	int maxx, maxy;
 	getmaxyx( sub_win, maxy, maxx );
 	werase( sub_win );
 
 	FPGA fpga;
-	bitstring_to_fpga( &fpga, bitstring );
+	bitstring_to_fpga( &fpga, bitstring, fault );
 
 	int num_values = pow( 2, FPGA_WIDTH );
 	int total_correct = 0;
@@ -766,11 +822,11 @@ void redraw_sub_win( unsigned char *bitstring, int sub_weight )
 	wrefresh( sub_win );
 }
 
-void redraw ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight )
+void redraw ( int iteration, unsigned char *bitstring, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight, Fault fault )
 {
-	redraw_add_win( bitstring, add_weight );
-	redraw_fpga_win( iteration, bitstring, most_fit, mean_fit, mean_div );
-	redraw_sub_win( bitstring, sub_weight );
+	redraw_add_win( bitstring, add_weight, fault );
+	redraw_fpga_win( iteration, bitstring, most_fit, mean_fit, mean_div, fault );
+	redraw_sub_win( bitstring, sub_weight, fault );
 	refresh();
 }
 

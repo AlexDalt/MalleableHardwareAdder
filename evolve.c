@@ -30,13 +30,13 @@ void log_data( int iteration, int mean_fit, int most_fit )
 	}
 }
 
-int ind_distance ( Individual x, Individual y )
+int ind_distance ( Individual x, Individual y, Fault f )
 {
 	int distance = 0;
 	FPGA fpga_x, fpga_y;
 
-	bitstring_to_fpga( &fpga_x, x.values );
-	bitstring_to_fpga( &fpga_y, y.values );
+	bitstring_to_fpga( &fpga_x, x.values, f );
+	bitstring_to_fpga( &fpga_y, y.values, f );
 
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
@@ -76,14 +76,14 @@ int ind_distance ( Individual x, Individual y )
 	return distance;
 }
 
-void evaluate( Individual *ind, Individual *pop )
+void evaluate( Individual *ind, Individual *pop, Fault fault )
 {
 	FPGA fpga;
 	int fitness = 0;
 	int size = 0;
 	int diversity = 0;
 
-	bitstring_to_fpga( &fpga, ind->values );
+	bitstring_to_fpga( &fpga, ind->values, fault );
 
 	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
@@ -141,7 +141,7 @@ void evaluate( Individual *ind, Individual *pop )
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
 
-		int distance = ind_distance( *ind, pop[ i ] );
+		int distance = ind_distance( *ind, pop[ i ], fault );
 		diversity += pow ( distance, 2 );
 	}
 
@@ -240,6 +240,12 @@ void evolve( Individual *pop )
 	add_weight = 1;
 	sub_weight = 0;
 
+	Fault fault;
+	fault.x = rand() % FPGA_WIDTH;
+	fault.y = rand() % FPGA_HEIGHT;
+	fault.dir = rand() % 4;
+	fault.value = rand() % 3;
+
 	while( true )
 	{
 		int mean_fit = 0;
@@ -248,7 +254,7 @@ void evolve( Individual *pop )
 
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
-			evaluate( &(pop[ i ]), pop );
+			evaluate( &(pop[ i ]), pop, fault );
 
 			mean_fit += pop[ i ].eval[ 0 ];
 			mean_size += pop[ i ].eval[ 1 ];
@@ -265,7 +271,7 @@ void evolve( Individual *pop )
 		mean_size = mean_size/POP_SIZE;
 		mean_div = mean_div/POP_SIZE;
 
-		redraw( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, add_weight, sub_weight );
+		redraw( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, add_weight, sub_weight, fault );
 		log_data( iteration, mean_fit, most_fit.eval[ 0 ] );
 
 		iteration++;
