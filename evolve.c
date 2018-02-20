@@ -273,7 +273,7 @@ void evolve( Individual *pop )
 		{
 			for ( int j = 0 ; j < FAULT_NUM ; j++ )
 			{
-				if ( iteration % 1000 < 500 )
+				if ( iteration % 1000 >= 500 )
 				{
 					pop[ i ].fpga.active_fault[ j ] = 0;
 				}
@@ -335,6 +335,7 @@ int main()
 		for ( int j = 0 ; j < STRING_LENGTH_BYTES ; j++ )
 		{
 			pop[ i ].values[ j ] = (unsigned char)(rand() % 255);
+			bitstring_to_fpga( &pop[ i ].fpga, pop[ i ].values );
 		}
 	}
 
