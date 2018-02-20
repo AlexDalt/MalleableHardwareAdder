@@ -240,21 +240,51 @@ void evolve( Individual *pop )
 	add_weight = 1;
 	sub_weight = 0;
 
-	Fault fault;
+	Fault fault, n_fault;
 	fault.x = rand() % FPGA_WIDTH;
 	fault.y = rand() % FPGA_HEIGHT;
 	fault.dir = rand() % 4;
+	if ( fault.x == 0 && fault.dir == WEST )
+	{
+		fault.dir = EAST;
+	}
+	if ( fault.y == 0 && fault.dir == NORTH )
+	{
+		fault.dir = SOUTH;
+	}
+	if ( fault.x == FPGA_WIDTH - 1 && fault.dir == EAST )
+	{
+		fault.dir = WEST;
+	}
+	if ( fault.y == FPGA_HEIGHT - 1 && fault.dir == SOUTH )
+	{
+		fault.dir = NORTH;
+	}
 	fault.value = rand() % 3;
+	n_fault.x = 0;
+	n_fault.y = 1;
+	n_fault.dir = 3;
+	n_fault.value = 2;
 
 	while( true )
 	{
 		int mean_fit = 0;
 		int mean_size = 0;
 		int mean_div = 0;
+		Fault round_fault;
+
+		if ( iteration % 1000 < 500 )
+		{
+			round_fault = n_fault;
+		}
+		else
+		{
+			round_fault = fault;
+		}
 
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
-			evaluate( &(pop[ i ]), pop, fault );
+			evaluate( &(pop[ i ]), pop, round_fault );
 
 			mean_fit += pop[ i ].eval[ 0 ];
 			mean_size += pop[ i ].eval[ 1 ];
@@ -271,7 +301,7 @@ void evolve( Individual *pop )
 		mean_size = mean_size/POP_SIZE;
 		mean_div = mean_div/POP_SIZE;
 
-		redraw( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, add_weight, sub_weight, fault );
+		redraw( iteration, most_fit.values, most_fit.eval[ 0 ], mean_fit, mean_div, add_weight, sub_weight, round_fault );
 		log_data( iteration, mean_fit, most_fit.eval[ 0 ] );
 
 		iteration++;
