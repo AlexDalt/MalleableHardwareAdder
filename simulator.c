@@ -547,9 +547,9 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 		mvwhline( fpga_win, cell_y * (i + 1), cell_x, ACS_HLINE, cell_x * FPGA_WIDTH + 1 );
 	}
 
-	for ( int i = 0 ; i < FPGA_WIDTH ; i++ )
+	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
-		for ( int j = 0 ; j < FPGA_HEIGHT ; j++ )
+		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
 		{
 			if ( i != 0 )
 			{
@@ -595,7 +595,7 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 						break;
 				}
 			}
-			if ( i != FPGA_WIDTH - 1 )
+			if ( i != FPGA_HEIGHT - 1 || j >= FPGA_WIDTH/2 - 1 )
 			{
 				switch ( fpga.cells[ i ][ j ].s_out )
 				{
@@ -616,7 +616,7 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 						break;
 				}
 			}
-			if ( j != FPGA_HEIGHT - 1 )
+			if ( j != FPGA_WIDTH - 1 )
 			{
 				switch ( fpga.cells[ i ][ j ].e_out )
 				{

@@ -7,7 +7,7 @@
 #include "simulator.h"
 
 #define POP_SIZE 400
-#define MUTATION 1.5f
+#define MUTATION 2.7f
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 4
 #define ELITISM 1
@@ -273,7 +273,7 @@ void evolve( Individual *pop )
 		{
 			for ( int j = 0 ; j < FAULT_NUM ; j++ )
 			{
-				if ( iteration % 1000 >= 500 )
+				if ( iteration % 1000 < 500 )
 				{
 					pop[ i ].fpga.active_fault[ j ] = 0;
 				}

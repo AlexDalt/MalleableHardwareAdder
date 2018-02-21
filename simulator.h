@@ -3,10 +3,10 @@
 #include <curses.h>
 #include <math.h>
 
-#define FPGA_HEIGHT 4
+#define FPGA_HEIGHT 3
 #define FPGA_WIDTH 4
 #define STRING_LENGTH_BYTES FPGA_WIDTH * FPGA_HEIGHT * 2
-#define FAULT_NUM 2
+#define FAULT_NUM 0
 
 typedef enum {
 	OFF,
