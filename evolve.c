@@ -7,9 +7,9 @@
 #include "simulator.h"
 
 #define POP_SIZE 400
-#define MUTATION 2.7f
+#define MUTATION 1.0f
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 4
+#define DIVERSITY_WEIGHT 5
 #define ELITISM 1
 #define FITNESS_WEIGHT 10
 
