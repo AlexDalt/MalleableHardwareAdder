@@ -367,6 +367,33 @@ void tock ( FPGA *fpga )
 			}
 		}
 	}
+	else
+	{
+		for ( int i = 0 ; i < FAULT_NUM ; i++ )
+		{
+			if ( fpga->active_fault[ i ] )
+			{
+				Fault f = fpga->faults[ i ];
+				Cell c = fpga->cells[ f.y ][ f.x ];
+				if ( c.n_out == F )
+				{
+					fpga->cells[ f.y ][ f.x ].n_val = f.value;
+				}
+				if ( c.e_out == F )
+				{
+					fpga->cells[ f.y ][ f.x ].e_val = f.value;
+				}
+				if ( c.s_out == F )
+				{
+					fpga->cells[ f.y ][ f.x ].s_val = f.value;
+				}
+				if ( c.w_out == F )
+				{
+					fpga->cells[ f.y ][ f.x ].w_val = f.value;
+				}
+			}
+		}
+	}
 }
 
 void evaluate_fpga ( FPGA *fpga )
@@ -688,35 +715,51 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 
 	int y, x;
 
-	for ( int i = 0 ; i < FAULT_NUM ; i++ )
+	if ( FAULT_TYPE_CON )
 	{
-		Fault f = fpga.faults[ i ];
-		if ( fpga.active_fault[ i ] )
+		for ( int i = 0 ; i < FAULT_NUM ; i++ )
 		{
-			wattron( fpga_win, COLOR_PAIR( 1 ) );
-			switch ( fpga.faults[ i ].dir )
+			Fault f = fpga.faults[ i ];
+			if ( fpga.active_fault[ i ] )
 			{
-				case NORTH:
-					y = cell_y * (f.y + 1) + 1;
-					x = cell_x * (f.x + 1) + cell_x/2;
-					break;
-				case EAST:
-					y = cell_y * (f.y + 1) + cell_y/2;
-					x = cell_x * (f.x + 2) - 1;
-					break;
-				case SOUTH:
-					y = cell_y * (f.y + 2) - 1;
-					x = cell_x * (f.x + 1) + cell_x/2;
-					break;
-				case WEST:
-					y = cell_y * (f.y + 1) + cell_y/2;
-					x = cell_x * (f.x + 1) + 1;
-					break;
-				default:
-					break;
+				wattron( fpga_win, COLOR_PAIR( 1 ) );
+				switch ( fpga.faults[ i ].dir )
+				{
+					case NORTH:
+						y = cell_y * (f.y + 1) + 1;
+						x = cell_x * (f.x + 1) + cell_x/2;
+						break;
+					case EAST:
+						y = cell_y * (f.y + 1) + cell_y/2;
+						x = cell_x * (f.x + 2) - 1;
+						break;
+					case SOUTH:
+						y = cell_y * (f.y + 2) - 1;
+						x = cell_x * (f.x + 1) + cell_x/2;
+						break;
+					case WEST:
+						y = cell_y * (f.y + 1) + cell_y/2;
+						x = cell_x * (f.x + 1) + 1;
+						break;
+					default:
+						break;
+				}
+				mvwprintw( fpga_win, y, x, "%d", f.value );
+				wattroff( fpga_win, COLOR_PAIR( 1 ) );
 			}
-			mvwprintw( fpga_win, y, x, "%d", f.value );
-			wattroff( fpga_win, COLOR_PAIR( 1 ) );
+		}
+	}
+	else
+	{
+		for ( int i = 0 ; i < FAULT_NUM ; i++ )
+		{
+			Fault f = fpga.faults[ i ];
+			if ( fpga.active_fault[ i ] )
+			{
+				wattron( fpga_win, COLOR_PAIR( 1 ) );
+				mvwprintw( fpga_win, cell_y * ( f.y + 1 ) + cell_y/2 + 1, cell_x * ( f.x + 1 ) + (cell_x - 5)/2, "  %d  ", f.value );
+				wattroff( fpga_win, COLOR_PAIR( 1 ) );
+			}
 		}
 	}
 
