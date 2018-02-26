@@ -340,27 +340,30 @@ void tock ( FPGA *fpga )
 		}
 	}
 
-	for ( int i = 0 ; i < FAULT_NUM ; i++ )
+	if ( FAULT_TYPE_CON )
 	{
-		if ( fpga->active_fault[ i ] )
+		for ( int i = 0 ; i < FAULT_NUM ; i++ )
 		{
-			Fault f = fpga->faults[ i ];
-			switch ( f.dir )
+			if ( fpga->active_fault[ i ] )
 			{
-				case NORTH:
-					fpga->cells[ f.y ][ f.x ].n_out = f.value;
-					break;
-				case EAST:
-					fpga->cells[ f.y ][ f.x ].e_out = f.value;
-					break;
-				case SOUTH:
-					fpga->cells[ f.y ][ f.x ].s_out = f.value;
-					break;
-				case WEST:
-					fpga->cells[ f.y ][ f.x ].w_out = f.value;
-					break;
-				default:
-					break;
+				Fault f = fpga->faults[ i ];
+				switch ( f.dir )
+				{
+					case NORTH:
+						fpga->cells[ f.y ][ f.x ].n_val = f.value;
+						break;
+					case EAST:
+						fpga->cells[ f.y ][ f.x ].e_val = f.value;
+						break;
+					case SOUTH:
+						fpga->cells[ f.y ][ f.x ].s_val = f.value;
+						break;
+					case WEST:
+						fpga->cells[ f.y ][ f.x ].w_val = f.value;
+						break;
+					default:
+						break;
+				}
 			}
 		}
 	}
