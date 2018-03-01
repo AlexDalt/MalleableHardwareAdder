@@ -449,6 +449,7 @@ void init_curses ()
 	start_color();
 	cbreak();
 	noecho();
+	nodelay(stdscr, TRUE);
 	curs_set( 0 );
 	getmaxyx( stdscr, row, col );
 

@@ -233,6 +233,7 @@ void new_pop( Individual *pop )
 void evolve( Individual *pop )
 {
 	int iteration = 0;
+	int fault = 0;
 	Individual most_fit;
 	int most_fit_score = -1;
 	add_weight = 1;
@@ -263,7 +264,7 @@ void evolve( Individual *pop )
 		faults[ i ].value = rand() % 3;
 	}
 
-	while( true )
+	while ( true )
 	{
 		int mean_fit = 0;
 		int mean_size = 0;
@@ -273,20 +274,10 @@ void evolve( Individual *pop )
 		{
 			for ( int j = 0 ; j < FAULT_NUM ; j++ )
 			{
-				if ( iteration % 1000 < 500 )
-				{
-					pop[ i ].fpga.active_fault[ j ] = 0;
-				}
-				else
-				{
-					pop[ i ].fpga.active_fault[ j ] = 1;
-				}
+				pop[ i ].fpga.active_fault[ j ] = fault;
 				pop[ i ].fpga.faults[ j ] = faults[ j ];
 			}
-		}
 
-		for ( int i = 0 ; i < POP_SIZE ; i++ )
-		{
 			evaluate( &(pop[ i ]), pop );
 
 			mean_fit += pop[ i ].eval[ 0 ];
@@ -317,6 +308,11 @@ void evolve( Individual *pop )
 		}
 
 		most_fit_score = -1;
+
+		if ( getch() == 'f' )
+		{
+			fault = (fault + 1) % 2;
+		}
 	}
 }
 
