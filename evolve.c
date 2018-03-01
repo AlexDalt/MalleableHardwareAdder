@@ -6,7 +6,7 @@
 #include <math.h>
 #include "simulator.h"
 
-#define POP_SIZE 400
+#define POP_SIZE 300
 #define MUTATION 1.0f
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 6
@@ -124,6 +124,8 @@ void evaluate( Individual *ind, Individual *pop )
 		fitness += add_weight * add_fit + sub_weight * sub_fit;
 	}
 
+	fitness = fitness/((add_weight + sub_weight));
+
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
 		for ( int j = 0 ; j < FPGA_WIDTH ; j++ )
@@ -236,7 +238,7 @@ void evolve( Individual *pop )
 	int fault = 0;
 	Individual most_fit;
 	int most_fit_score = -1;
-	add_weight = 1;
+	add_weight = 10;
 	sub_weight = 0;
 
 	Fault faults[ FAULT_NUM ];
@@ -309,9 +311,21 @@ void evolve( Individual *pop )
 
 		most_fit_score = -1;
 
-		if ( getch() == 'f' )
+		int c = getch();
+
+		if ( c == 'f' )
 		{
 			fault = (fault + 1) % 2;
+		}
+		else if ( c == KEY_LEFT && add_weight > 0 )
+		{
+			add_weight--;
+			sub_weight++;
+		}
+		else if ( c == KEY_RIGHT && sub_weight > 0 )
+		{
+			add_weight++;
+			sub_weight--;
 		}
 	}
 }
