@@ -1,4 +1,7 @@
 set terminal png
 set output "graph.png"
-plot "log.dat" using 2 title "mean fitness" with lines,\
-"log.dat" using 3 title "best case fitness" with lines
+set title "Mean and best case fitness of each generation"
+set xlabel "Generation"
+set ylabel "Fitness"
+plot "log.dat" using 2 title "Mean" with lines,\
+"log.dat" using 3 title "Best case" with lines

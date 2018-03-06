@@ -6,10 +6,10 @@
 #include <math.h>
 #include "simulator.h"
 
-#define POP_SIZE 300
+#define POP_SIZE 400
 #define MUTATION 1.0f
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 6
+#define DIVERSITY_WEIGHT 5
 #define ELITISM 1
 #define FITNESS_WEIGHT 10
 
@@ -313,9 +313,71 @@ void evolve( Individual *pop )
 
 		int c = getch();
 
+		// d for demo (load demo faults and adder)
+		// r for reset
+
 		if ( c == 'f' )
 		{
 			fault = (fault + 1) % 2;
+		}
+		else if ( c == 'd' )
+		{
+			pop[ 0 ].values[ 0 ]  = 52; pop[ 0 ].values[ 1 ]  = 32;
+			pop[ 0 ].values[ 2 ]  = 108; pop[ 0 ].values[ 3 ]  = 32;
+			pop[ 0 ].values[ 4 ]  = 52; pop[ 0 ].values[ 5 ]  = 32;
+			pop[ 0 ].values[ 6 ]  = 108; pop[ 0 ].values[ 7 ]  = 32;
+			pop[ 0 ].values[ 8 ]  =  0; pop[ 0 ].values[ 9 ]  =  0;
+			pop[ 0 ].values[ 10 ] = 52; pop[ 0 ].values[ 11 ] = 32;
+			pop[ 0 ].values[ 12 ] = 108; pop[ 0 ].values[ 13 ] = 32;
+			pop[ 0 ].values[ 14 ] =  0; pop[ 0 ].values[ 15 ] =  0;
+			pop[ 0 ].values[ 16 ] =  0; pop[ 0 ].values[ 17 ] =  0;
+			pop[ 0 ].values[ 18 ] = 44; pop[ 0 ].values[ 19 ] = 32;
+			pop[ 0 ].values[ 20 ] =  0; pop[ 0 ].values[ 21 ] =  0;
+			pop[ 0 ].values[ 22 ] =  0; pop[ 0 ].values[ 23 ] =  0;
+			pop[ 0 ].values[ 24 ] =  0; pop[ 0 ].values[ 25 ] =  0;
+			pop[ 0 ].values[ 26 ] =  0; pop[ 0 ].values[ 27 ] =  0;
+			pop[ 0 ].values[ 28 ] =  0; pop[ 0 ].values[ 29 ] =  0;
+			pop[ 0 ].values[ 30 ] =  0; pop[ 0 ].values[ 31 ] =  0;
+
+			for ( int i = 0 ; i < FAULT_NUM ; i++ )
+			{
+				faults[ i ].x = 2;
+				faults[ i ].y = 1;
+			}
+		}
+		else if ( c == 'r' )
+		{
+			for ( int i = 0 ; i < POP_SIZE ; i++ )
+			{
+				for ( int j = 0 ; j < STRING_LENGTH_BYTES ; j++ )
+				{
+					pop[ i ].values[ j ] = (unsigned char)(rand() % 255);
+					bitstring_to_fpga( &pop[ i ].fpga, pop[ i ].values );
+				}
+			}
+			for ( int i = 0 ; i < FAULT_NUM ; i++ )
+			{
+				faults[ i ].x = rand() % FPGA_WIDTH;
+				faults[ i ].y = rand() % FPGA_HEIGHT;
+				faults[ i ].dir = rand() % 4;
+				if ( faults[ i ].x == 0 && faults[ i ].dir == WEST )
+				{
+					faults[ i ].dir = EAST;
+				}
+				if ( faults[ i ].y == 0 && faults[ i ].dir == NORTH )
+				{
+					faults[ i ].dir = SOUTH;
+				}
+				if ( faults[ i ].x == FPGA_WIDTH - 1 && faults[ i ].dir == EAST )
+				{
+					faults[ i ].dir = WEST;
+				}
+				if ( faults[ i ].y == FPGA_HEIGHT - 1 && faults[ i ].dir == SOUTH )
+				{
+					faults[ i ].dir = NORTH;
+				}
+				faults[ i ].value = rand() % 3;
+			}
 		}
 		else if ( c == KEY_LEFT && add_weight > 0 )
 		{
