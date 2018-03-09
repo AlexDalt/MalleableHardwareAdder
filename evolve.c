@@ -343,6 +343,7 @@ void evolve( Individual *pop )
 			{
 				faults[ i ].x = 2;
 				faults[ i ].y = 1;
+				faults[ i ].value = 2;
 			}
 		}
 		else if ( c == 'r' )

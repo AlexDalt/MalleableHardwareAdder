@@ -1,5 +1,6 @@
 set terminal png
 set output "graph.png"
+set key bottom
 set title "Mean and best case fitness of each generation"
 set xlabel "Generation"
 set ylabel "Fitness"
