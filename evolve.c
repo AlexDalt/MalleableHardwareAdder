@@ -10,8 +10,9 @@
 #define MUTATION 1.0f
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 5
-#define ELITISM 1
+#define ELITISM 0
 #define FITNESS_WEIGHT 10
+#define COEVOLVE 1
 
 int add_weight, sub_weight;
 
@@ -20,6 +21,11 @@ typedef struct Individual {
 	int eval[ 3 ];
 	FPGA fpga;
 } Individual;
+
+typedef struct Parasite {
+	unsigned char values[ 16 ];
+	int score;
+} Parasite;
 
 void log_data( int iteration, int mean_fit, int most_fit )
 {
@@ -75,19 +81,35 @@ int ind_distance ( Individual x, Individual y )
 	return distance;
 }
 
-void evaluate( Individual *ind, Individual *pop )
+void evaluate( Individual *ind, Parasite *para, Individual *pop )
 {
 	FPGA fpga = ind->fpga;
 	int fitness = 0;
 	int size = 0;
 	int diversity = 0;
+	int max = pow( 2, FPGA_WIDTH );
 
-	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
+	if ( COEVOLVE )
+	{
+		max = 16;
+	}
+
+	for ( int i = 0 ; i < max ; i++ )
 	{
 		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
+		int value;
 
-		int v1 = i & mask;
-		int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+		if ( COEVOLVE )
+		{
+			value = para->values[ i ];
+		}
+		else
+		{
+			value = i;
+		}
+
+		int v1 = value & mask;
+		int v2 = ( value >> FPGA_WIDTH/2 ) & mask;
 		int sum = v1 + v2;
 		int dif = v1 - v2;
 
@@ -125,6 +147,7 @@ void evaluate( Individual *ind, Individual *pop )
 	}
 
 	fitness = fitness/((add_weight + sub_weight));
+	para->score = 48 - fitness;
 
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
@@ -178,16 +201,60 @@ void quicksort( Individual *pop, int low, int high )
 	}
 }
 
+void quicksort_parasite( Parasite *pop, int low, int high )
+{
+	if ( low < high )
+	{
+		int index = low;
+		Parasite pivot = pop[ index ];
+		int pivot_score = pivot.score;
+		for ( int i = low + 1 ; i < high ; i++ )
+		{
+			int pop_score = pop[ i ].score;
+
+			if ( pop_score < pivot_score )
+			{
+				Parasite disp = pop[ index + 1 ];
+				Parasite new = pop[ i ];
+				pop[ i ] = disp;
+				pop[ index + 1 ] = pivot;
+				pop[ index ] = new;
+				index++;
+			}
+		}
+
+		quicksort_parasite( pop, low, index );
+		quicksort_parasite( pop, index + 1, high );
+	}
+}
+
 void order( Individual *pop )
 {
 	quicksort( pop, 0, POP_SIZE );
 }
 
-void new_pop( Individual *pop )
+void order_parasite( Parasite *pop )
+{
+	quicksort_parasite( pop, 0, POP_SIZE );
+}
+
+void shuffle_parasites( Parasite *para_pop )
+{
+	for ( int i = 0 ; i < POP_SIZE ; i++ )
+	{
+		int j = i + rand() / (RAND_MAX / ( POP_SIZE - i ) + 1);
+		Parasite t = para_pop[ j ];
+		para_pop[ j ] = para_pop[ i ];
+		para_pop[ i ] = t;
+	}
+}
+
+void new_pop( Individual *pop, Parasite *para_pop )
 {
 	int random;
 	int total_score = 0;
 	Individual new_pop[ POP_SIZE ];
+	Parasite new_para_pop[ POP_SIZE ];
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
@@ -195,6 +262,11 @@ void new_pop( Individual *pop )
 	}
 
 	order( pop );
+
+	if ( COEVOLVE )
+	{
+		order_parasite( para_pop );
+	}
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
@@ -208,6 +280,20 @@ void new_pop( Individual *pop )
 		}
 
 		new_pop[ i ] = pop[ index ];
+
+		if ( COEVOLVE )
+		{
+			random = rand() % total_score;
+			int score_count = 0;
+			int index = 0;
+			while ( index < POP_SIZE && score_count + 1 + index < random )
+			{
+				score_count += 1 + index;
+				index++;
+			}
+
+			new_para_pop[ i ] = para_pop[ index ];
+		}
 	}
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
@@ -223,16 +309,36 @@ void new_pop( Individual *pop )
 				}
 			}
 		}
+
+		if ( COEVOLVE )
+		{
+			for ( int j = 0 ; j < 16 ; j++ )
+			{
+				for ( int k = 0 ; k < 8 ; k++ )
+				{
+					float random_mut = (float)rand() / (float)RAND_MAX;
+					if ( random_mut < MUTATION/(float)8 )
+					{
+						new_para_pop[ i ].values[ j ] = new_para_pop[ i ].values[ j ] ^ (1 << k);
+					}
+				}
+			}
+		}
 	}
 
 	for ( int  i = 0 ; i < POP_SIZE ; i++ )
 	{
 		pop[ i ] = new_pop[ i ];
 		bitstring_to_fpga( &pop[ i ].fpga, pop[ i ].values );
+
+		if ( COEVOLVE )
+		{
+			para_pop[ i ] = new_para_pop[ i ];
+		}
 	}
 }
 
-void evolve( Individual *pop )
+void evolve( Individual *pop, Parasite *para_pop )
 {
 	int iteration = 0;
 	int fault = 0;
@@ -272,6 +378,11 @@ void evolve( Individual *pop )
 		int mean_size = 0;
 		int mean_div = 0;
 
+		if ( COEVOLVE )
+		{
+			shuffle_parasites( para_pop );
+		}
+
 		for ( int i = 0 ; i < POP_SIZE ; i++ )
 		{
 			for ( int j = 0 ; j < FAULT_NUM ; j++ )
@@ -280,7 +391,7 @@ void evolve( Individual *pop )
 				pop[ i ].fpga.faults[ j ] = faults[ j ];
 			}
 
-			evaluate( &(pop[ i ]), pop );
+			evaluate( &pop[ i ], &para_pop[ i ], pop );
 
 			mean_fit += pop[ i ].eval[ 0 ];
 			mean_size += pop[ i ].eval[ 1 ];
@@ -302,7 +413,7 @@ void evolve( Individual *pop )
 
 		iteration++;
 
-		new_pop( pop );
+		new_pop( pop, para_pop );
 
 		if ( ELITISM )
 		{
@@ -313,31 +424,28 @@ void evolve( Individual *pop )
 
 		int c = getch();
 
-		// d for demo (load demo faults and adder)
-		// r for reset
-
 		if ( c == 'f' )
 		{
 			fault = (fault + 1) % 2;
 		}
 		else if ( c == 'd' )
 		{
-			pop[ 0 ].values[ 0 ]  = 52; pop[ 0 ].values[ 1 ]  = 32;
+			pop[ 0 ].values[ 0 ]  =  52; pop[ 0 ].values[ 1 ]  = 32;
 			pop[ 0 ].values[ 2 ]  = 108; pop[ 0 ].values[ 3 ]  = 32;
-			pop[ 0 ].values[ 4 ]  = 52; pop[ 0 ].values[ 5 ]  = 32;
+			pop[ 0 ].values[ 4 ]  =  52; pop[ 0 ].values[ 5 ]  = 32;
 			pop[ 0 ].values[ 6 ]  = 108; pop[ 0 ].values[ 7 ]  = 32;
-			pop[ 0 ].values[ 8 ]  =  0; pop[ 0 ].values[ 9 ]  =  0;
-			pop[ 0 ].values[ 10 ] = 52; pop[ 0 ].values[ 11 ] = 32;
+			pop[ 0 ].values[ 8 ]  =   0; pop[ 0 ].values[ 9 ]  =  0;
+			pop[ 0 ].values[ 10 ] =  52; pop[ 0 ].values[ 11 ] = 32;
 			pop[ 0 ].values[ 12 ] = 108; pop[ 0 ].values[ 13 ] = 32;
-			pop[ 0 ].values[ 14 ] =  0; pop[ 0 ].values[ 15 ] =  0;
-			pop[ 0 ].values[ 16 ] =  0; pop[ 0 ].values[ 17 ] =  0;
-			pop[ 0 ].values[ 18 ] = 44; pop[ 0 ].values[ 19 ] = 32;
-			pop[ 0 ].values[ 20 ] =  0; pop[ 0 ].values[ 21 ] =  0;
-			pop[ 0 ].values[ 22 ] =  0; pop[ 0 ].values[ 23 ] =  0;
-			pop[ 0 ].values[ 24 ] =  0; pop[ 0 ].values[ 25 ] =  0;
-			pop[ 0 ].values[ 26 ] =  0; pop[ 0 ].values[ 27 ] =  0;
-			pop[ 0 ].values[ 28 ] =  0; pop[ 0 ].values[ 29 ] =  0;
-			pop[ 0 ].values[ 30 ] =  0; pop[ 0 ].values[ 31 ] =  0;
+			pop[ 0 ].values[ 14 ] =   0; pop[ 0 ].values[ 15 ] =  0;
+			pop[ 0 ].values[ 16 ] =   0; pop[ 0 ].values[ 17 ] =  0;
+			pop[ 0 ].values[ 18 ] =  44; pop[ 0 ].values[ 19 ] = 32;
+			pop[ 0 ].values[ 20 ] =   0; pop[ 0 ].values[ 21 ] =  0;
+			pop[ 0 ].values[ 22 ] =   0; pop[ 0 ].values[ 23 ] =  0;
+			pop[ 0 ].values[ 24 ] =   0; pop[ 0 ].values[ 25 ] =  0;
+			pop[ 0 ].values[ 26 ] =   0; pop[ 0 ].values[ 27 ] =  0;
+			pop[ 0 ].values[ 28 ] =   0; pop[ 0 ].values[ 29 ] =  0;
+			pop[ 0 ].values[ 30 ] =   0; pop[ 0 ].values[ 31 ] =  0;
 
 			for ( int i = 0 ; i < FAULT_NUM ; i++ )
 			{
@@ -395,7 +503,8 @@ void evolve( Individual *pop )
 
 int main()
 {
-	Individual pop[POP_SIZE];
+	Individual pop[ POP_SIZE ];
+	Parasite para_pop[ POP_SIZE ];
 	int random;
 
 	int rng = open( "/dev/urandom", O_RDONLY );
@@ -410,11 +519,16 @@ int main()
 			pop[ i ].values[ j ] = (unsigned char)(rand() % 255);
 			bitstring_to_fpga( &pop[ i ].fpga, pop[ i ].values );
 		}
+
+		for ( int j = 0 ; j < 16 ; j++ )
+		{
+			para_pop[ i ].values[ j ] = (unsigned char)(rand() % 255);
+		}
 	}
 
 	init_curses();
 
-	evolve( pop );
+	evolve( pop, para_pop );
 
 	tidy_up_curses();
 
