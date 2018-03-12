@@ -798,16 +798,19 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 
 	box( fpga_win, 0, 0 );
 	float ratio = (float)add_weight / (float)(add_weight + sub_weight);
-	for( int i = 0 ; i < maxx ; i++ )
+	mvwprintw( fpga_win, cell_y/2, cell_x - 1, "[" );
+	mvwprintw( fpga_win, cell_y/2, cell_x + (cell_x * FPGA_WIDTH), "]" );
+	mvwprintw( fpga_win, cell_y/2 - 1, (maxx - 15)/2, "ADD/SUB weights" );
+	for( int i = 0 ; i < FPGA_WIDTH * cell_x ; i++ )
 	{
-		float check = (float)i / (float)maxx;
+		float check = (float)i / (float)(FPGA_WIDTH * cell_x);
 		if ( check < ratio )
 		{
-			mvwprintw( fpga_win, 0, i, "+" );
+			mvwprintw( fpga_win, cell_y/2, cell_x + i, "+" );
 		}
 		else
 		{
-			mvwprintw( fpga_win, 0, i, "-" );
+			mvwprintw( fpga_win, cell_y/2, cell_x + i, "-" );
 		}
 	}
 
