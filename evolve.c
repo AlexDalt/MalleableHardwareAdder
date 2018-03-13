@@ -7,12 +7,14 @@
 #include "simulator.h"
 
 #define POP_SIZE 400
-#define MUTATION 1.0f
+#define MUTATION 2.5f
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 5
-#define ELITISM 0
+#define ELITISM 1
 #define FITNESS_WEIGHT 10
 #define COEVOLVE 1
+#define STICKY 0
+#define LOG 1
 
 int add_weight, sub_weight;
 
@@ -27,12 +29,12 @@ typedef struct Parasite {
 	int score;
 } Parasite;
 
-void log_data( int iteration, int mean_fit, int most_fit )
+void log_data( int iteration, int mean_fit, int most_fit, int performance, int mean_para_fit )
 {
 	FILE *fp = fopen( "log.dat", "a" );
 	if ( fp != NULL )
 	{
-		fprintf( fp, "%d    %d    %d\n", iteration, mean_fit, most_fit );
+		fprintf( fp, "%d    %d    %d	%d	%d\n", iteration, mean_fit, most_fit, performance, mean_para_fit );
 		fclose( fp );
 	}
 }
@@ -146,7 +148,7 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 		fitness += add_weight * add_fit + sub_weight * sub_fit;
 	}
 
-	fitness = fitness/((add_weight + sub_weight));
+	fitness = fitness/(add_weight + sub_weight);
 	para->score = 48 - fitness;
 
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
@@ -162,7 +164,6 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
-
 		int distance = ind_distance( *ind, pop[ i ] );
 		diversity += pow ( distance, 2 );
 	}
@@ -377,6 +378,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 		int mean_fit = 0;
 		int mean_size = 0;
 		int mean_div = 0;
+		int mean_para_fit = 0;
 
 		if ( COEVOLVE )
 		{
@@ -396,6 +398,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 			mean_fit += pop[ i ].eval[ 0 ];
 			mean_size += pop[ i ].eval[ 1 ];
 			mean_div += pop[ i ].eval[ 2 ];
+			mean_para_fit += para_pop[ i ].score;
 
 			if ( most_fit_score <= pop[ i ].eval[ 0 ] )
 			{
@@ -407,9 +410,59 @@ void evolve( Individual *pop, Parasite *para_pop )
 		mean_fit = mean_fit/POP_SIZE;
 		mean_size = mean_size/POP_SIZE;
 		mean_div = mean_div/POP_SIZE;
+		mean_para_fit = mean_para_fit/POP_SIZE;
 
-		redraw( iteration, most_fit.fpga, most_fit.eval[ 0 ], mean_fit, mean_div, add_weight, sub_weight );
-		log_data( iteration, mean_fit, most_fit.eval[ 0 ] );
+		int test = 0;
+
+		for ( int i = 0 ; i < pow( 2, FPGA_WIDTH ) ; i++ )
+		{
+			int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
+			int v1 = i & mask;
+			int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+			int sum = v1 + v2;
+			int dif = v1 - v2;
+
+			for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+			{
+				most_fit.fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+				most_fit.fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+			}
+
+			int add_fit = 0;
+			int sub_fit = 0;
+			most_fit.fpga.control = 0;
+			evaluate_fpga( &most_fit.fpga );
+
+			for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+			{
+				if ( most_fit.fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( sum >> j ) & 1) )
+				{
+					add_fit++;
+				}
+			}
+
+			most_fit.fpga.control = 1;
+			evaluate_fpga( &most_fit.fpga );
+
+			for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+			{
+				if ( most_fit.fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( dif >> j ) & 1) )
+				{
+					sub_fit++;
+				}
+			}
+
+			test += add_weight * add_fit + sub_weight * sub_fit;
+		}
+
+		test = test / (add_weight + sub_weight);
+
+		redraw( iteration, most_fit.fpga, test, mean_fit, mean_div, add_weight, sub_weight );
+
+		if ( LOG )
+		{
+			log_data( iteration, mean_fit, most_fit.eval[ 0 ], test, mean_para_fit );
+		}
 
 		iteration++;
 
@@ -424,7 +477,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 		int c = getch();
 
-		if ( c == 'f' )
+		if ( c == 'f' || (STICKY && iteration % 500 == 0) )
 		{
 			fault = (fault + 1) % 2;
 		}

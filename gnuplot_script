@@ -4,5 +4,7 @@ set key bottom
 set title "Mean and best case fitness of each generation"
 set xlabel "Generation"
 set ylabel "Fitness"
-plot "log.dat" using 2 title "Mean" with lines,\
-"log.dat" using 3 title "Best case" with lines
+plot "log.dat" using 2 title "Mean fitness" with lines,\
+"log.dat" using 3 title "Best case fitness" with lines,\
+"log.dat" using 4 title "Best case score" with lines,\
+"log.dat" using 5 title "Parasite fitness" with lines
