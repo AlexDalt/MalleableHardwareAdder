@@ -7,14 +7,16 @@
 #include "simulator.h"
 
 #define POP_SIZE 400
-#define MUTATION 2.5f
+#define MUTATION 1.0f
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 5
+#define DIVERSITY_WEIGHT 4
 #define ELITISM 1
 #define FITNESS_WEIGHT 10
-#define COEVOLVE 1
+#define COEVOLVE 0
 #define STICKY 0
 #define LOG 1
+#define PROB_SKEW 0.0f //between 0 or 1, 1 is linear
+#define VIRULENCE 0.5f
 
 int add_weight, sub_weight;
 
@@ -149,7 +151,8 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 	}
 
 	fitness = fitness/(add_weight + sub_weight);
-	para->score = 48 - fitness;
+	int para_score = 48 - fitness;
+	para->score = (2 * para_score)/VIRULENCE - (pow( para_score, 2 ))/(pow( VIRULENCE, 2 ));
 
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
@@ -250,6 +253,14 @@ void shuffle_parasites( Parasite *para_pop )
 	}
 }
 
+float ind_prob( int position )
+{
+	float b = PROB_SKEW;
+	float a = ( 1 - b )/POP_SIZE;
+
+	return a * pow( position, 2 ) + b * position + 1;
+}
+
 void new_pop( Individual *pop, Parasite *para_pop )
 {
 	int random;
@@ -259,7 +270,7 @@ void new_pop( Individual *pop, Parasite *para_pop )
 
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
-		total_score += 1 + i;
+		total_score += ind_prob( i );
 	}
 
 	order( pop );
@@ -274,9 +285,9 @@ void new_pop( Individual *pop, Parasite *para_pop )
 		random = rand() % total_score;
 		int score_count = 0;
 		int index = 0;
-		while ( index < POP_SIZE && score_count + 1 + index < random )
+		while ( index < POP_SIZE && score_count + ind_prob( index ) < random )
 		{
-			score_count += 1 + index;
+			score_count += ind_prob( index );
 			index++;
 		}
 
@@ -287,9 +298,9 @@ void new_pop( Individual *pop, Parasite *para_pop )
 			random = rand() % total_score;
 			int score_count = 0;
 			int index = 0;
-			while ( index < POP_SIZE && score_count + 1 + index < random )
+			while ( index < POP_SIZE && score_count + index < random )
 			{
-				score_count += 1 + index;
+				score_count += ind_prob( index );
 				index++;
 			}
 
@@ -315,10 +326,10 @@ void new_pop( Individual *pop, Parasite *para_pop )
 		{
 			for ( int j = 0 ; j < 16 ; j++ )
 			{
-				for ( int k = 0 ; k < 8 ; k++ )
+				for ( int k = 0 ; k < 4 ; k++ )
 				{
 					float random_mut = (float)rand() / (float)RAND_MAX;
-					if ( random_mut < MUTATION/(float)8 )
+					if ( random_mut < MUTATION/(float)4 )
 					{
 						new_para_pop[ i ].values[ j ] = new_para_pop[ i ].values[ j ] ^ (1 << k);
 					}
@@ -506,6 +517,8 @@ void evolve( Individual *pop, Parasite *para_pop )
 				faults[ i ].y = 1;
 				faults[ i ].value = 2;
 			}
+
+			iteration = 0;
 		}
 		else if ( c == 'r' )
 		{
@@ -540,6 +553,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 				}
 				faults[ i ].value = rand() % 3;
 			}
+			iteration = 0;
 		}
 		else if ( c == KEY_LEFT && add_weight > 0 )
 		{
