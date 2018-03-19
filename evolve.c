@@ -10,13 +10,13 @@
 #define MUTATION 1.0f
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 4
-#define ELITISM 1
+#define ELITISM 0
 #define FITNESS_WEIGHT 10
-#define COEVOLVE 0
+#define COEVOLVE 1
 #define STICKY 0
 #define LOG 1
 #define PROB_SKEW 0.0f //between 0 or 1, 1 is linear
-#define VIRULENCE 0.5f
+#define VIRULENCE 1.0f
 
 int add_weight, sub_weight;
 
@@ -28,7 +28,7 @@ typedef struct Individual {
 
 typedef struct Parasite {
 	unsigned char values[ 16 ];
-	int score;
+	float score;
 } Parasite;
 
 void log_data( int iteration, int mean_fit, int most_fit, int performance, int mean_para_fit )
@@ -151,8 +151,7 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 	}
 
 	fitness = fitness/(add_weight + sub_weight);
-	int para_score = 48 - fitness;
-	para->score = (2 * para_score)/VIRULENCE - (pow( para_score, 2 ))/(pow( VIRULENCE, 2 ));
+	para->score = 48 - fitness;
 
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
 	{
@@ -177,6 +176,24 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 	ind->eval[ 0 ] = fitness;
 	ind->eval[ 1 ] = size;
 	ind->eval[ 2 ] = diversity;
+}
+
+void mod_parasite( Parasite *pop )
+{
+	float best = -1;
+	for ( int i = 0 ; i < POP_SIZE ; i++ )
+	{
+		if ( pop[ i ].score > best )
+		{
+			best = pop[ i ].score;
+		}
+	}
+
+	for ( int i = 0 ; i < POP_SIZE ; i++ )
+	{
+		float score = pop[ i ].score/best;
+		pop[ i ].score = (2 * score)/VIRULENCE - (pow( score, 2 ))/pow( VIRULENCE, 2 );
+	}
 }
 
 void quicksort( Individual *pop, int low, int high )
@@ -277,6 +294,7 @@ void new_pop( Individual *pop, Parasite *para_pop )
 
 	if ( COEVOLVE )
 	{
+		mod_parasite( para_pop );
 		order_parasite( para_pop );
 	}
 
@@ -298,7 +316,7 @@ void new_pop( Individual *pop, Parasite *para_pop )
 			random = rand() % total_score;
 			int score_count = 0;
 			int index = 0;
-			while ( index < POP_SIZE && score_count + index < random )
+			while ( index < POP_SIZE && score_count + ind_prob( index ) < random )
 			{
 				score_count += ind_prob( index );
 				index++;
