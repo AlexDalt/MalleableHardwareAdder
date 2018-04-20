@@ -1,0 +1,7 @@
+set terminal png
+set output "landscape.png"
+set title "Fitness Landscape"
+set xlabel "Genetic Material"
+set ylabel "Fitness"
+set format x ""
+plot "map.dat" u 1 with lines title ""

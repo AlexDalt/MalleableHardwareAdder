@@ -1,35 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <math.h>
-#include "simulator.h"
-
-#define POP_SIZE 400
-#define MUTATION 1.0f
-#define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 4
-#define ELITISM 0
-#define FITNESS_WEIGHT 10
-#define COEVOLVE 1
-#define STICKY 0
-#define LOG 1
-#define PROB_SKEW 0.0f //between 0 or 1, 1 is linear
-#define VIRULENCE 1.0f
-
-int add_weight, sub_weight;
-
-typedef struct Individual {
-	unsigned char values[ STRING_LENGTH_BYTES ];
-	int eval[ 3 ];
-	FPGA fpga;
-} Individual;
-
-typedef struct Parasite {
-	unsigned char values[ 16 ];
-	float score;
-} Parasite;
+#include "evolve.h"
 
 void log_data( int iteration, int mean_fit, int most_fit, int performance, int mean_para_fit )
 {
@@ -95,7 +64,7 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 
 	if ( COEVOLVE )
 	{
-		max = 16;
+		max = PARASITE_SIZE;
 	}
 
 	for ( int i = 0 ; i < max ; i++ )
@@ -347,7 +316,7 @@ void new_pop( Individual *pop, Parasite *para_pop )
 				for ( int k = 0 ; k < 4 ; k++ )
 				{
 					float random_mut = (float)rand() / (float)RAND_MAX;
-					if ( random_mut < MUTATION/(float)4 )
+					if ( random_mut < MUTATION/(float)64 )
 					{
 						new_para_pop[ i ].values[ j ] = new_para_pop[ i ].values[ j ] ^ (1 << k);
 					}
@@ -582,6 +551,15 @@ void evolve( Individual *pop, Parasite *para_pop )
 		{
 			add_weight++;
 			sub_weight--;
+		}
+
+		if ( iteration == 100 ){
+			FILE *file = fopen( "spec", "a" );
+			for ( int count = 0 ; count < 32 ; count++ )
+			{
+				fprintf(file, "%d ", most_fit.values[ count ]);
+			}
+			fclose(file);
 		}
 	}
 }
