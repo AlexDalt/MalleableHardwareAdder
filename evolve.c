@@ -64,7 +64,7 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 
 	if ( COEVOLVE )
 	{
-		max = PARASITE_SIZE;
+		max = PARASITE_SIZE/2;
 	}
 
 	for ( int i = 0 ; i < max ; i++ )
@@ -102,6 +102,21 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 			if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( sum >> j ) & 1) )
 			{
 				add_fit++;
+			}
+		}
+
+		if ( COEVOLVE )
+		{
+			value = para->values[ i + PARASITE_SIZE/2 ];
+			v1 = value & mask;
+			v2 = ( value >> FPGA_WIDTH/2 ) & mask;
+			sum = v1 + v2;
+			dif = v1 - v2;
+
+			for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+			{
+				fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+				fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
 			}
 		}
 
@@ -239,6 +254,17 @@ void shuffle_parasites( Parasite *para_pop )
 	}
 }
 
+void shuffle_individuals( Individual *pop )
+{
+	for ( int i = 0 ; i < POP_SIZE ; i++ )
+	{
+		int j = i + rand() / (RAND_MAX / ( POP_SIZE - i ) + 1);
+		Individual t = pop[ j ];
+		pop[ j ] = pop[ i ];
+		pop[ i ] = t;
+	}
+}
+
 float ind_prob( int position )
 {
 	float b = PROB_SKEW;
@@ -292,6 +318,44 @@ void new_pop( Individual *pop, Parasite *para_pop )
 			}
 
 			new_para_pop[ i ] = para_pop[ index ];
+		}
+	}
+
+	if ( CROSSOVER > 0 )
+	{
+		shuffle_individuals( new_pop );
+		for( int i = 0 ; i < POP_SIZE ; i = i + 2 )
+		{
+			float cross_rand = (float)rand() / (float) RAND_MAX;
+			if ( cross_rand > CROSSOVER )
+			{
+				int swap_pos = rand() % STRING_LENGTH_BYTES;
+				for ( int j = 0 ; j < swap_pos ; j++ )
+				{
+					unsigned char temp = new_pop[ i ].values[ j ];
+					new_pop[ i ].values[ j ] = new_pop[ i + 1 ].values[ j ];
+					new_pop[ i + 1 ].values[ j ] = temp;
+				}
+			}
+		}
+
+		if ( COEVOLVE )
+		{
+			shuffle_parasites( new_para_pop );
+			for( int i = 0 ; i < POP_SIZE ; i = i + 2 )
+			{
+				float cross_rand = (float)rand() / (float) RAND_MAX;
+				if ( cross_rand > CROSSOVER )
+				{
+					int swap_pos = rand() % PARASITE_SIZE;
+					for ( int j = 0 ; j < swap_pos ; j++ )
+					{
+						unsigned char temp = new_para_pop[ i ].values[ j ];
+						new_para_pop[ i ].values[ j ] = new_para_pop[ i + 1 ].values[ j ];
+						new_para_pop[ i + 1 ].values[ j ] = temp;
+					}
+				}
+			}
 		}
 	}
 
