@@ -616,15 +616,6 @@ void evolve( Individual *pop, Parasite *para_pop )
 			add_weight++;
 			sub_weight--;
 		}
-
-		if ( iteration == 100 ){
-			FILE *file = fopen( "spec", "a" );
-			for ( int count = 0 ; count < 32 ; count++ )
-			{
-				fprintf(file, "%d ", most_fit.values[ count ]);
-			}
-			fclose(file);
-		}
 	}
 }
 
