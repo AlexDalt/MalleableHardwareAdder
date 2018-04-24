@@ -6,12 +6,12 @@
 #include <math.h>
 #include "simulator.h"
 
-#define TEST_SIZE 10
-#define TEST_LOOP 100
-#define POP_SIZE 400
-#define MUTATION 0.5f
+#define TEST_SIZE 30
+#define TEST_LOOP 5000
+#define POP_SIZE 50
+#define MUTATION 2.7f
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 4
+#define DIVERSITY_WEIGHT 5
 #define ELITISM 1
 #define FITNESS_WEIGHT 10
 #define COEVOLVE 0
@@ -21,7 +21,7 @@
 #define VIRULENCE 1.0f
 #define PARASITE_SIZE 32
 #define CROSSOVER 0.7f
-#define TOURNAMENT_SIZE 50
+#define TOURNAMENT_SIZE POP_SIZE
 
 int add_weight, sub_weight;
 
