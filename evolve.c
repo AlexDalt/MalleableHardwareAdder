@@ -279,11 +279,8 @@ void new_pop( Individual *pop, Parasite *para_pop )
 	int total_score = 0;
 	Individual new_pop[ POP_SIZE ];
 	Parasite new_para_pop[ POP_SIZE ];
-
-	for ( int i = 0 ; i < POP_SIZE ; i++ )
-	{
-		total_score += ind_prob( i );
-	}
+	Individual sub_pop[ TOURNAMENT_SIZE ];
+	Parasite sub_para_pop[ TOURNAMENT_SIZE ];
 
 	order( pop );
 
@@ -293,31 +290,84 @@ void new_pop( Individual *pop, Parasite *para_pop )
 		order_parasite( para_pop );
 	}
 
+	if ( TOURNAMENT_SIZE < POP_SIZE )
+	{
+		for ( int i = 0 ; i < TOURNAMENT_SIZE ; i++ )
+		{
+			total_score += ind_prob( i );
+		}
+	}
+	else
+	{
+		for ( int i = 0 ; i < POP_SIZE ; i++ )
+		{
+			total_score += ind_prob( i );
+		}
+	}
+
 	for ( int i = 0 ; i < POP_SIZE ; i++ )
 	{
 		random = rand() % total_score;
 		int score_count = 0;
 		int index = 0;
-		while ( index < POP_SIZE && score_count + ind_prob( index ) < random )
+		if ( TOURNAMENT_SIZE < POP_SIZE )
 		{
-			score_count += ind_prob( index );
-			index++;
+			shuffle_individuals( pop );
+			for ( int j = 0 ; j < TOURNAMENT_SIZE ; j++ )
+			{
+				sub_pop[ j ] = pop[ j ];
+			}
+			quicksort( sub_pop, 0, TOURNAMENT_SIZE );
+
+			while( index < TOURNAMENT_SIZE && score_count + ind_prob( index ) < random )
+			{
+				score_count += ind_prob( index );
+				index++;
+			}
+			new_pop[ i ] = sub_pop[ index ];
 		}
-
-		new_pop[ i ] = pop[ index ];
-
-		if ( COEVOLVE )
+		else
 		{
-			random = rand() % total_score;
-			int score_count = 0;
-			int index = 0;
 			while ( index < POP_SIZE && score_count + ind_prob( index ) < random )
 			{
 				score_count += ind_prob( index );
 				index++;
 			}
 
-			new_para_pop[ i ] = para_pop[ index ];
+			new_pop[ i ] = pop[ index ];
+		}
+
+		if ( COEVOLVE )
+		{
+			random = rand() % total_score;
+			int score_count = 0;
+			int index = 0;
+			if ( TOURNAMENT_SIZE < POP_SIZE )
+			{
+				shuffle_parasites( para_pop );
+				for ( int j = 0 ; j < TOURNAMENT_SIZE ; j++ )
+				{
+					sub_para_pop[ j ] = para_pop[ j ];
+				}
+				quicksort_parasite( sub_para_pop, 0, TOURNAMENT_SIZE );
+
+				while( index < TOURNAMENT_SIZE && score_count + ind_prob( index ) < random )
+				{
+					score_count += ind_prob( index );
+					index++;
+				}
+				new_para_pop[ i ] = sub_para_pop[ index ];
+			}
+			else
+			{
+				while ( index < POP_SIZE && score_count + ind_prob( index ) < random )
+				{
+					score_count += ind_prob( index );
+					index++;
+				}
+
+				new_para_pop[ i ] = para_pop[ index ];
+			}
 		}
 	}
 
@@ -446,7 +496,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 		faults[ i ].value = rand() % 3;
 	}
 
-	while ( test_run < TEST_SIZE || !TEST_SIZE )
+	while ( test_run < TEST_SIZE )
 	{
 		int mean_fit = 0;
 		int mean_size = 0;
@@ -528,7 +578,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 			test += add_weight * add_fit + sub_weight * sub_fit;
 		}
 		test = test / (add_weight + sub_weight);
-		
+
 		if ( COEVOLVE )
 		{
 			mean_fit = 0;
@@ -636,7 +686,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 			iteration = 0;
 		}
-		else if ( c == 'r' || (iteration == TEST_LOOP && TEST_LOOP > 0) )
+		else if ( c == 'r' || iteration == TEST_LOOP )
 		{
 			for ( int i = 0 ; i < POP_SIZE ; i++ )
 			{
