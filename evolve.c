@@ -403,12 +403,23 @@ void new_pop( Individual *pop, Parasite *para_pop )
 
 void evolve( Individual *pop, Parasite *para_pop )
 {
+	int test_run = 0;
 	int iteration = 0;
+	int perfect_run = 0;
 	int fault = 0;
 	Individual most_fit;
 	int most_fit_score = -1;
 	add_weight = 10;
 	sub_weight = 0;
+
+	int avg_mean[ TEST_LOOP ];
+	int avg_best[ TEST_LOOP ];
+
+	for ( int i = 0 ; i < TEST_LOOP ; i++ )
+	{
+		avg_mean[ i ] = 0;
+		avg_best[ i ] = 0;
+	}
 
 	Fault faults[ FAULT_NUM ];
 	for ( int i = 0 ; i < FAULT_NUM ; i++ )
@@ -435,7 +446,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 		faults[ i ].value = rand() % 3;
 	}
 
-	while ( true )
+	while ( test_run < TEST_SIZE || !TEST_SIZE )
 	{
 		int mean_fit = 0;
 		int mean_size = 0;
@@ -516,15 +527,69 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 			test += add_weight * add_fit + sub_weight * sub_fit;
 		}
-
 		test = test / (add_weight + sub_weight);
+		
+		if ( COEVOLVE )
+		{
+			mean_fit = 0;
+			for ( int j = 0 ; j < POP_SIZE ; j++ )
+			{
+				for ( int i = 0 ; i < pow( 2, FPGA_WIDTH ) ; i++ )
+				{
+					int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
+					int v1 = i & mask;
+					int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
+					int sum = v1 + v2;
+					int dif = v1 - v2;
 
-		redraw( iteration, most_fit.fpga, test, mean_fit, mean_div, add_weight, sub_weight );
+					for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+					{
+						pop[ j ].fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+						pop[ j ].fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+					}
+
+					int add_fit = 0;
+					int sub_fit = 0;
+					pop[ j ].fpga.control = 0;
+					evaluate_fpga( &pop[ j ].fpga );
+
+					for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+					{
+						if ( most_fit.fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( sum >> j ) & 1) )
+						{
+							add_fit++;
+						}
+					}
+
+					most_fit.fpga.control = 1;
+					evaluate_fpga( &pop[ j ].fpga );
+
+					for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+					{
+						if ( most_fit.fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( dif >> j ) & 1) )
+						{
+							sub_fit++;
+						}
+					}
+
+					mean_fit += (add_weight * add_fit + sub_weight * sub_fit)/(add_weight + sub_weight);
+				}
+			}
+
+			mean_fit = mean_fit/POP_SIZE;
+		}
+
+		redraw( test_run, iteration, most_fit.fpga, test, mean_fit, mean_div, add_weight, sub_weight );
 
 		if ( LOG )
 		{
 			log_data( iteration, mean_fit, most_fit.eval[ 0 ], test, mean_para_fit );
 		}
+
+		avg_mean[ iteration ] = avg_mean[ iteration ] * test_run + mean_fit;
+		avg_mean[ iteration ] = avg_mean[ iteration ] / (test_run + 1);
+		avg_best[ iteration ] = avg_best[ iteration ] * test_run + test;
+		avg_best[ iteration ] = avg_best[ iteration ] / (test_run + 1);
 
 		iteration++;
 
@@ -571,7 +636,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 			iteration = 0;
 		}
-		else if ( c == 'r' )
+		else if ( c == 'r' || (iteration == TEST_LOOP && TEST_LOOP > 0) )
 		{
 			for ( int i = 0 ; i < POP_SIZE ; i++ )
 			{
@@ -604,7 +669,13 @@ void evolve( Individual *pop, Parasite *para_pop )
 				}
 				faults[ i ].value = rand() % 3;
 			}
+
+			if ( test == (FPGA_WIDTH/2 + 1) * pow(2,FPGA_WIDTH))
+			{
+				perfect_run++;
+			}
 			iteration = 0;
+			test_run++;
 		}
 		else if ( c == KEY_LEFT && add_weight > 0 )
 		{
@@ -616,6 +687,24 @@ void evolve( Individual *pop, Parasite *para_pop )
 			add_weight++;
 			sub_weight--;
 		}
+	}
+
+
+	FILE *fp1 = fopen( "test.dat", "a" );
+	if ( fp1 != NULL )
+	{
+		for ( int i = 0 ; i < TEST_LOOP ; i++ )
+		{
+			fprintf( fp1, "%d    %d    %d\n", i, avg_mean[ i ], avg_best[ i ] );
+		}
+		fclose( fp1 );
+	}
+
+	FILE *fp2 = fopen( "summary.txt", "a" );
+	if ( fp2 != NULL )
+	{
+		fprintf( fp2, "Number of perfect runs %d/%d\n", perfect_run, TEST_SIZE );
+		fclose( fp2 );
 	}
 }
 

@@ -528,7 +528,7 @@ void redraw_add_win( FPGA fpga, int add_weight )
 	wrefresh( add_win );
 }
 
-void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight )
+void redraw_fpga_win ( int test_loop, int iteration, FPGA fpga, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight )
 {
 	int maxx, maxy;
 	getmaxyx( fpga_win, maxy, maxx );
@@ -815,7 +815,7 @@ void redraw_fpga_win ( int iteration, FPGA fpga, int most_fit, int mean_fit, int
 	}
 
 	mvwprintw( fpga_win, maxy-2, (maxx - 15)/2, "best fitness %2d", most_fit );
-	mvwprintw( fpga_win, maxy-1, (maxx - 51)/2, "iteration %4d, mean fitness %3d, mean_diversity %2d", iteration, mean_fit, mean_div );
+	mvwprintw( fpga_win, maxy-1, (maxx - 51)/2, "iteration %d:%4d, mean fitness %3d, mean_diversity %2d", test_loop, iteration, mean_fit, mean_div );
 	wrefresh( fpga_win );
 }
 
@@ -881,10 +881,10 @@ void redraw_sub_win( FPGA fpga, int sub_weight )
 	wrefresh( sub_win );
 }
 
-void redraw ( int iteration, FPGA fpga, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight )
+void redraw ( int test_loop, int iteration, FPGA fpga, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight )
 {
 	redraw_add_win( fpga, add_weight );
-	redraw_fpga_win( iteration, fpga, most_fit, mean_fit, mean_div, add_weight, sub_weight );
+	redraw_fpga_win( test_loop, iteration, fpga, most_fit, mean_fit, mean_div, add_weight, sub_weight );
 	redraw_sub_win( fpga, sub_weight );
 	refresh();
 }

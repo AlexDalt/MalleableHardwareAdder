@@ -72,6 +72,6 @@ void evaluate_fpga ( FPGA *fpga );
 
 void init_curses ();
 
-void redraw ( int iteration, FPGA fpga, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight );
+void redraw ( int test_loop, int iteration, FPGA fpga, int most_fit, int mean_fit, int mean_div, int add_weight, int sub_weight );
 
 void tidy_up_curses();
