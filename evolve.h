@@ -8,8 +8,8 @@
 #include "simulator.h"
 
 #define TEST_SIZE 30
-#define TEST_LOOP 10000
-#define POP_SIZE 500
+#define TEST_LOOP 20000
+#define POP_SIZE 50
 #define MUTATION 2.7f
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT -1
@@ -21,7 +21,7 @@
 #define PROB_SKEW 1.0f //between 0 or 1, 1 is linear
 #define VIRULENCE 1.0f
 #define PARASITE_SIZE 32
-#define CROSSOVER 0.0f
+#define CROSSOVER 0.7f
 #define TOURNAMENT_SIZE POP_SIZE
 
 int add_weight, sub_weight;

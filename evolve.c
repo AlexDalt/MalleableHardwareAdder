@@ -466,12 +466,14 @@ void evolve( Individual *pop, Parasite *para_pop )
 	sub_weight = 0;
 
 	int avg_mean[ TEST_LOOP ];
+	int avg_div[ TEST_LOOP ];
 	int avg_best[ TEST_LOOP ];
 
 	for ( int i = 0 ; i < TEST_LOOP ; i++ )
 	{
 		avg_mean[ i ] = 0;
 		avg_best[ i ] = 0;
+		avg_div[ i ] = 0;
 	}
 
 	Fault faults[ FAULT_NUM ];
@@ -645,6 +647,8 @@ void evolve( Individual *pop, Parasite *para_pop )
 		avg_mean[ iteration ] = avg_mean[ iteration ] / (test_run + 1);
 		avg_best[ iteration ] = avg_best[ iteration ] * test_run + test;
 		avg_best[ iteration ] = avg_best[ iteration ] / (test_run + 1);
+		avg_div[ iteration ] = avg_div[ iteration ] * test_run + mean_div;
+		avg_div[ iteration ] = avg_div[ iteration ] / (test_run + 1);
 
 		iteration++;
 
