@@ -496,6 +496,8 @@ void evolve( Individual *pop, Parasite *para_pop )
 		faults[ i ].value = rand() % 3;
 	}
 
+	clock_t begin = clock();
+
 	while ( test_run < TEST_SIZE )
 	{
 		int mean_fit = 0;
@@ -739,6 +741,9 @@ void evolve( Individual *pop, Parasite *para_pop )
 		}
 	}
 
+	clock_t end = clock();
+	double execution_time = (double)(end - begin) / CLOCKS_PER_SEC;
+	execution_time = execution_time / TEST_LOOP;
 
 	FILE *fp1 = fopen( "test.dat", "a" );
 	if ( fp1 != NULL )
@@ -753,7 +758,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 	FILE *fp2 = fopen( "summary.txt", "a" );
 	if ( fp2 != NULL )
 	{
-		fprintf( fp2, "Number of perfect runs %d/%d\n", perfect_run, TEST_SIZE );
+		fprintf( fp2, "Number of perfect runs %d/%d, average time %f\n", perfect_run, TEST_SIZE, execution_time );
 		fclose( fp2 );
 	}
 }
