@@ -750,7 +750,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 	clock_t end = clock();
 	double execution_time = (double)(end - begin) / CLOCKS_PER_SEC;
-	execution_time = execution_time / TEST_LOOP;
+	execution_time = execution_time / TEST_SIZE;
 
 	FILE *fp1 = fopen( "test.dat", "a" );
 	if ( fp1 != NULL )

@@ -8,11 +8,11 @@
 #include "simulator.h"
 
 #define TEST_SIZE 30
-#define TEST_LOOP 20000
+#define TEST_LOOP 15000
 #define POP_SIZE 50
 #define MUTATION 2.7f
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT -1
+#define DIVERSITY_WEIGHT 4
 #define ELITISM 1
 #define FITNESS_WEIGHT 10
 #define COEVOLVE 0
