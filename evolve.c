@@ -148,14 +148,17 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 		}
 	}
 
-	for ( int i = 0 ; i < POP_SIZE ; i++ )
+	if ( DIVERSITY_WEIGHT != -1 )
 	{
-		int distance = ind_distance( *ind, pop[ i ] );
-		diversity += pow ( distance, 2 );
-	}
+		for ( int i = 0 ; i < POP_SIZE ; i++ )
+		{
+			int distance = ind_distance( *ind, pop[ i ] );
+			diversity += pow ( distance, 2 );
+		}
 
-	diversity = diversity / POP_SIZE;
-	diversity = (int)sqrt( (double)diversity );
+		diversity = diversity / POP_SIZE;
+		diversity = (int)sqrt( (double)diversity );
+	}
 
 	ind->eval[ 0 ] = fitness;
 	ind->eval[ 1 ] = size;
@@ -758,9 +761,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 	FILE *fp2 = fopen( "summary.txt", "a" );
 	if ( fp2 != NULL )
 	{
-		fprintf( fp2, "Number of perfect runs %d/%d, average time %f, average
-				best case end fitness %d\n", perfect_run, TEST_SIZE,
-				execution_time, avg_best[ TEST_LOOP - 1] );
+		fprintf( fp2, "Number of perfect runs %d/%d, average time %f, average best case end fitness %d\n", perfect_run, TEST_SIZE, execution_time, avg_best[ TEST_LOOP - 1] );
 		fclose( fp2 );
 	}
 }
