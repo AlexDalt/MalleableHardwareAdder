@@ -815,7 +815,7 @@ void redraw_fpga_win ( int test_loop, int iteration, FPGA fpga, int most_fit, in
 	}
 
 	mvwprintw( fpga_win, maxy-2, (maxx - 15)/2, "best fitness %2d", most_fit );
-	mvwprintw( fpga_win, maxy-1, (maxx - 51)/2, "%d:%4d, mean fit %3d, mean div %2d", test_loop, iteration, mean_fit, mean_div );
+	mvwprintw( fpga_win, maxy-1, (maxx - 33)/2, "%2d:%4d, mean fit %3d, mean div %2d", test_loop, iteration, mean_fit, mean_div );
 	wrefresh( fpga_win );
 }
 

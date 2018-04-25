@@ -1,7 +1,7 @@
 set terminal png
 set output "graph.png"
 set key bottom
-set title "Average mean and best case fitness of each generation"
+set title "Average Best Case and Mean Fitness for Each Generation"
 set xlabel "Generation"
 set ylabel "Fitness"
 plot "test.dat" using 2 title "Mean fitness" with lines,\
