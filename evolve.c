@@ -758,7 +758,9 @@ void evolve( Individual *pop, Parasite *para_pop )
 	FILE *fp2 = fopen( "summary.txt", "a" );
 	if ( fp2 != NULL )
 	{
-		fprintf( fp2, "Number of perfect runs %d/%d, average time %f\n", perfect_run, TEST_SIZE, execution_time );
+		fprintf( fp2, "Number of perfect runs %d/%d, average time %f, average
+				best case end fitness %d\n", perfect_run, TEST_SIZE,
+				execution_time, avg_best[ TEST_LOOP - 1] );
 		fclose( fp2 );
 	}
 }
