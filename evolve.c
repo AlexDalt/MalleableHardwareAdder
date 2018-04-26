@@ -321,13 +321,7 @@ void new_pop( Individual *pop, Parasite *para_pop )
 				sub_pop[ j ] = pop[ j ];
 			}
 			quicksort( sub_pop, 0, TOURNAMENT_SIZE );
-
-			while( index < TOURNAMENT_SIZE && score_count + ind_prob( index ) < random )
-			{
-				score_count += ind_prob( index );
-				index++;
-			}
-			new_pop[ i ] = sub_pop[ index ];
+			new_pop[ i ] = sub_pop[ TOURNAMENT_SIZE - 1];
 		}
 		else
 		{
@@ -353,13 +347,7 @@ void new_pop( Individual *pop, Parasite *para_pop )
 					sub_para_pop[ j ] = para_pop[ j ];
 				}
 				quicksort_parasite( sub_para_pop, 0, TOURNAMENT_SIZE );
-
-				while( index < TOURNAMENT_SIZE && score_count + ind_prob( index ) < random )
-				{
-					score_count += ind_prob( index );
-					index++;
-				}
-				new_para_pop[ i ] = sub_para_pop[ index ];
+				new_para_pop[ i ] = sub_para_pop[ TOURNAMENT_SIZE ];
 			}
 			else
 			{
