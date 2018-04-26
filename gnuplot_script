@@ -4,5 +4,7 @@ set key bottom
 set title "Average Best Case and Mean Fitness for Each Generation"
 set xlabel "Generation"
 set ylabel "Fitness"
+set xrange [0:15000]
+set yrange [0:50]
 plot "test.dat" using 2 title "Mean fitness" with lines,\
 "test.dat" using 3 title "Best case fitness" with lines
