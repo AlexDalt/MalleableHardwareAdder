@@ -745,7 +745,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 	{
 		for ( int i = 0 ; i < TEST_LOOP ; i++ )
 		{
-			fprintf( fp1, "%d    %d    %d\n", i, avg_mean[ i ], avg_best[ i ] );
+			fprintf( fp1, "%d    %d    %d	%d\n", i, avg_mean[ i ], avg_best[ i ], avg_div[ i ] );
 		}
 		fclose( fp1 );
 	}
