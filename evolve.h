@@ -18,11 +18,11 @@
 #define COEVOLVE 0
 #define STICKY 0
 #define LOG 0
-#define PROB_SKEW 0.5f //between 0 or 1, 1 is linear
+#define PROB_SKEW 0.0f //between 0 or 1, 1 is linear
 #define VIRULENCE 1.0f
 #define PARASITE_SIZE 32
-#define CROSSOVER 0.7f
-#define TOURNAMENT_SIZE 30
+#define CROSSOVER 0.5f
+#define TOURNAMENT_SIZE 20
 
 int add_weight, sub_weight;
 
