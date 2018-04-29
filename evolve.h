@@ -9,10 +9,10 @@
 
 #define TEST_SIZE 30
 #define TEST_LOOP 15000
-#define POP_SIZE 25
+#define POP_SIZE 50
 #define MUTATION 3.0f
 #define SIZE_WEIGHT 0
-#define DIVERSITY_WEIGHT 4
+#define DIVERSITY_WEIGHT 6
 #define ELITISM 1
 #define FITNESS_WEIGHT 10
 #define COEVOLVE 0
@@ -22,7 +22,7 @@
 #define VIRULENCE 1.0f
 #define PARASITE_SIZE 32
 #define CROSSOVER 0.7f
-#define TOURNAMENT_SIZE 10 //set to POP_SIZE for rank-based selection
+#define TOURNAMENT_SIZE 20 //set to POP_SIZE for rank-based selection
 
 int add_weight, sub_weight;
 
