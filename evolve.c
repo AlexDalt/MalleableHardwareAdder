@@ -391,7 +391,7 @@ void new_pop( Individual *pop, Parasite *para_pop )
 					sub_para_pop[ j ] = para_pop[ j ];
 				}
 				quicksort_parasite( sub_para_pop, 0, TOURNAMENT_SIZE );
-				new_para_pop[ i ] = sub_para_pop[ TOURNAMENT_SIZE ];
+				new_para_pop[ i ] = sub_para_pop[ TOURNAMENT_SIZE - 1 ];
 			}
 			else
 			{
@@ -562,10 +562,21 @@ void evolve( Individual *pop, Parasite *para_pop )
 			mean_div += pop[ i ].eval[ 2 ];
 			mean_para_fit += para_pop[ i ].score;
 
-			if ( most_fit_score <= pop[ i ].eval[ 0 ] )
+			if ( COEVOLVE )
 			{
-				most_fit = pop[ i ];
-				most_fit_score = pop[ i ].eval[ 0 ];
+				if ( most_fit_score < full_test( &pop[ i ] ) )
+				{
+					most_fit = pop[ i ];
+					most_fit_score = full_test( &pop[ i ] );
+				}
+			}
+			else
+			{
+				if ( most_fit_score <= pop[ i ].eval[ 0 ] )
+				{
+					most_fit = pop[ i ];
+					most_fit_score = pop[ i ].eval[ 0 ];
+				}
 			}
 		}
 
