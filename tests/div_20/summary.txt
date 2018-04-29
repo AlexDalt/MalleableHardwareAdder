@@ -1,0 +1,1 @@
+Number of perfect runs 7/30, average time 237.694343, average best case end fitness 41
