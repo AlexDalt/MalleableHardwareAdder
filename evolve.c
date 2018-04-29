@@ -54,32 +54,15 @@ int ind_distance ( Individual x, Individual y )
 	return distance;
 }
 
-void evaluate( Individual *ind, Parasite *para, Individual *pop )
+int full_test( Individual *ind )
 {
 	FPGA fpga = ind->fpga;
-	int fitness = 0;
-	int size = 0;
-	int diversity = 0;
-	int max = pow( 2, FPGA_WIDTH );
+	int score = 0;
 
-	if ( COEVOLVE )
-	{
-		max = PARASITE_SIZE/2;
-	}
-
-	for ( int i = 0 ; i < max ; i++ )
+	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
 		int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
-		int value;
-
-		if ( COEVOLVE )
-		{
-			value = para->values[ i ];
-		}
-		else
-		{
-			value = i;
-		}
+		int value = i;
 
 		int v1 = value & mask;
 		int v2 = ( value >> FPGA_WIDTH/2 ) & mask;
@@ -105,21 +88,6 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 			}
 		}
 
-		if ( COEVOLVE )
-		{
-			value = para->values[ i + PARASITE_SIZE/2 ];
-			v1 = value & mask;
-			v2 = ( value >> FPGA_WIDTH/2 ) & mask;
-			sum = v1 + v2;
-			dif = v1 - v2;
-
-			for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
-			{
-				fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
-				fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
-			}
-		}
-
 		fpga.control = 1;
 		evaluate_fpga( &fpga );
 
@@ -131,10 +99,86 @@ void evaluate( Individual *ind, Parasite *para, Individual *pop )
 			}
 		}
 
-		fitness += add_weight * add_fit + sub_weight * sub_fit;
+		score += add_weight * add_fit + sub_weight * sub_fit;
 	}
 
-	fitness = fitness/(add_weight + sub_weight);
+	return score/(add_weight + sub_weight);
+}
+
+void evaluate( Individual *ind, Parasite *para, Individual *pop )
+{
+	FPGA fpga = ind->fpga;
+	int fitness = 0;
+	int size = 0;
+	int diversity = 0;
+	int max = pow( 2, FPGA_WIDTH );
+
+	if ( COEVOLVE )
+	{
+		max = PARASITE_SIZE/2;
+		for ( int i = 0 ; i < max ; i++ )
+		{
+			int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
+			int value = para->values[ i ];
+
+			int v1 = value & mask;
+			int v2 = ( value >> FPGA_WIDTH/2 ) & mask;
+			int sum = v1 + v2;
+			int dif = v1 - v2;
+
+			for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+			{
+				fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+				fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+			}
+
+			int add_fit = 0;
+			int sub_fit = 0;
+			fpga.control = 0;
+			evaluate_fpga( &fpga );
+
+			for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+			{
+				if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( sum >> j ) & 1) )
+				{
+					add_fit++;
+				}
+			}
+
+			value = para->values[ i + PARASITE_SIZE/2 ];
+			v1 = value & mask;
+			v2 = ( value >> FPGA_WIDTH/2 ) & mask;
+			sum = v1 + v2;
+			dif = v1 - v2;
+
+			for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
+			{
+				fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+				fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
+			}
+
+			fpga.control = 1;
+			evaluate_fpga( &fpga );
+
+			for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
+			{
+				if ( fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( dif >> j ) & 1) )
+				{
+					sub_fit++;
+				}
+			}
+
+			fitness += add_weight * add_fit + sub_weight * sub_fit;
+		}
+
+		fitness = fitness/(add_weight + sub_weight);
+	}
+	else
+	{
+		fitness = full_test( ind );
+	}
+
+
 	para->score = 48 - fitness;
 
 	for ( int i = 0 ; i < FPGA_HEIGHT ; i++ )
@@ -530,95 +574,14 @@ void evolve( Individual *pop, Parasite *para_pop )
 		mean_div = mean_div/POP_SIZE;
 		mean_para_fit = mean_para_fit/POP_SIZE;
 
-		int test = 0;
-
-		for ( int i = 0 ; i < pow( 2, FPGA_WIDTH ) ; i++ )
-		{
-			int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
-			int v1 = i & mask;
-			int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
-			int sum = v1 + v2;
-			int dif = v1 - v2;
-
-			for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
-			{
-				most_fit.fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
-				most_fit.fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
-			}
-
-			int add_fit = 0;
-			int sub_fit = 0;
-			most_fit.fpga.control = 0;
-			evaluate_fpga( &most_fit.fpga );
-
-			for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
-			{
-				if ( most_fit.fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( sum >> j ) & 1) )
-				{
-					add_fit++;
-				}
-			}
-
-			most_fit.fpga.control = 1;
-			evaluate_fpga( &most_fit.fpga );
-
-			for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
-			{
-				if ( most_fit.fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( dif >> j ) & 1) )
-				{
-					sub_fit++;
-				}
-			}
-
-			test += add_weight * add_fit + sub_weight * sub_fit;
-		}
-		test = test / (add_weight + sub_weight);
+		int test = full_test( &most_fit );
 
 		if ( COEVOLVE )
 		{
 			mean_fit = 0;
 			for ( int j = 0 ; j < POP_SIZE ; j++ )
 			{
-				for ( int i = 0 ; i < pow( 2, FPGA_WIDTH ) ; i++ )
-				{
-					int mask = ( 1 << FPGA_WIDTH/2 ) - 1;
-					int v1 = i & mask;
-					int v2 = ( i >> FPGA_WIDTH/2 ) & mask;
-					int sum = v1 + v2;
-					int dif = v1 - v2;
-
-					for ( int j = 0 ; j < FPGA_WIDTH/2 ; j++ )
-					{
-						pop[ j ].fpga.input[ j * 2 ] = ( v1 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
-						pop[ j ].fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
-					}
-
-					int add_fit = 0;
-					int sub_fit = 0;
-					pop[ j ].fpga.control = 0;
-					evaluate_fpga( &pop[ j ].fpga );
-
-					for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
-					{
-						if ( most_fit.fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( sum >> j ) & 1) )
-						{
-							add_fit++;
-						}
-					}
-
-					most_fit.fpga.control = 1;
-					evaluate_fpga( &pop[ j ].fpga );
-
-					for ( int j = 0 ; j < FPGA_WIDTH/2 + 1 ; j++ )
-					{
-						if ( most_fit.fpga.cells[ FPGA_HEIGHT - 1 ][ FPGA_WIDTH - j - 1 ].s_val == (( dif >> j ) & 1) )
-						{
-							sub_fit++;
-						}
-					}
-
-					mean_fit += (add_weight * add_fit + sub_weight * sub_fit)/(add_weight + sub_weight);
-				}
+				mean_fit += full_test( &pop[ j ] );
 			}
 
 			mean_fit = mean_fit/POP_SIZE;
