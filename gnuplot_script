@@ -1,7 +1,7 @@
 set terminal png
 set output "graph.png"
 set key bottom
-set title "Average Best Case and Mean Accuracy for Each Generation"
+set title "Average Best Case Accuracy and Mean Accuracy for Each Generation"
 set xlabel "Generation"
 set ylabel "Accuracy"
 set xrange [0:15000]
