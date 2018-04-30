@@ -8,7 +8,7 @@
 #include "simulator.h"
 
 #define TEST_SIZE 30
-#define TEST_LOOP 15000
+#define TEST_LOOP 1000
 #define FAULT_INJECTION 500
 #define POP_SIZE 50
 #define MUTATION 3.0f

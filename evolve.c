@@ -629,7 +629,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 		{
 			fault = (fault + 1) % 2;
 		}
-		else if ( c == 'r' || iteration == TEST_LOOP )
+		if ( c == 'r' || iteration == TEST_LOOP )
 		{
 			for ( int i = 0 ; i < POP_SIZE ; i++ )
 			{
