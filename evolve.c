@@ -625,7 +625,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 		int c = getch();
 
-		if ( c == 'f' || (STICKY && iteration % 500 == 0) )
+		if ( c == 'f' || (FAULT_INJECTION && STICKY && iteration % FAULT_INJECTION == 0) || FAULT_INJECTION && iteraton == FAULT_INJECTION )
 		{
 			fault = (fault + 1) % 2;
 		}

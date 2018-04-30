@@ -7,19 +7,20 @@
 #include <time.h>
 #include "simulator.h"
 
-#define TEST_SIZE 30
+#define TEST_SIZE 10
 #define TEST_LOOP 15000
+#define FAULT_INJECTION 1000
 #define POP_SIZE 50
 #define MUTATION 3.0f
 #define SIZE_WEIGHT 0
 #define DIVERSITY_WEIGHT 2
-#define ELITISM 0
+#define ELITISM 1
 #define FITNESS_WEIGHT 10
 #define COEVOLVE 1
 #define STICKY 0
 #define LOG 0
 #define PROB_SKEW 0.0f //between 0 or 1, 1 is linear
-#define VIRULENCE 1.0f
+#define VIRULENCE 0.9f
 #define PARASITE_SIZE 16
 #define CROSSOVER 0.7f
 #define TOURNAMENT_SIZE 20 //set to POP_SIZE for rank-based selection
