@@ -562,7 +562,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 			mean_div += pop[ i ].eval[ 2 ];
 			mean_para_fit += para_pop[ i ].score;
 
-			if ( COEVOLVE )
+			if ( COEVOLVE && ELITISM )
 			{
 				if ( most_fit_score < full_test( &pop[ i ] ) )
 				{
