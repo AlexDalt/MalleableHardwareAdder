@@ -625,11 +625,11 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 		int c = getch();
 
-		if ( c == 'f' || (FAULT_INJECTION && STICKY && iteration % FAULT_INJECTION == 0) || (FAULT_INJECTION && iteration == FAULT_INJECTION ))
+		if ( c == 'f' || (FAULT_INJECTION > 0 && STICKY && iteration % FAULT_INJECTION == 0) || (FAULT_INJECTION > 0 && iteration == FAULT_INJECTION ))
 		{
 			fault = (fault + 1) % 2;
 		}
-		else if ( c == 'd' )
+		else if ( c == 'd' || (FAULT_INJECTION > 0 && !STICKY && iteration == 2) )
 		{
 			pop[ 0 ].values[ 0 ]  =  52; pop[ 0 ].values[ 1 ]  = 32;
 			pop[ 0 ].values[ 2 ]  = 108; pop[ 0 ].values[ 3 ]  = 32;
@@ -654,8 +654,6 @@ void evolve( Individual *pop, Parasite *para_pop )
 				faults[ i ].y = 1;
 				faults[ i ].value = 2;
 			}
-
-			iteration = 0;
 		}
 		else if ( c == 'r' || iteration == TEST_LOOP )
 		{

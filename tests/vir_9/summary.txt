@@ -1,0 +1,1 @@
+Number of perfect runs 0/10, average time 624.657402, average best case end fitness 36
