@@ -6,7 +6,7 @@
 #define FPGA_HEIGHT 4
 #define FPGA_WIDTH 4
 #define STRING_LENGTH_BYTES FPGA_WIDTH * FPGA_HEIGHT * 2
-#define FAULT_NUM 2
+#define FAULT_NUM 1
 #define FAULT_TYPE_CON 0
 
 typedef enum {

@@ -629,32 +629,6 @@ void evolve( Individual *pop, Parasite *para_pop )
 		{
 			fault = (fault + 1) % 2;
 		}
-		else if ( c == 'd' || (FAULT_INJECTION > 0 && !STICKY && iteration == 2) )
-		{
-			pop[ 0 ].values[ 0 ]  =  52; pop[ 0 ].values[ 1 ]  = 32;
-			pop[ 0 ].values[ 2 ]  = 108; pop[ 0 ].values[ 3 ]  = 32;
-			pop[ 0 ].values[ 4 ]  =  52; pop[ 0 ].values[ 5 ]  = 32;
-			pop[ 0 ].values[ 6 ]  = 108; pop[ 0 ].values[ 7 ]  = 32;
-			pop[ 0 ].values[ 8 ]  =   0; pop[ 0 ].values[ 9 ]  =  0;
-			pop[ 0 ].values[ 10 ] =  52; pop[ 0 ].values[ 11 ] = 32;
-			pop[ 0 ].values[ 12 ] = 108; pop[ 0 ].values[ 13 ] = 32;
-			pop[ 0 ].values[ 14 ] =   0; pop[ 0 ].values[ 15 ] =  0;
-			pop[ 0 ].values[ 16 ] =   0; pop[ 0 ].values[ 17 ] =  0;
-			pop[ 0 ].values[ 18 ] =  44; pop[ 0 ].values[ 19 ] = 32;
-			pop[ 0 ].values[ 20 ] =   0; pop[ 0 ].values[ 21 ] =  0;
-			pop[ 0 ].values[ 22 ] =   0; pop[ 0 ].values[ 23 ] =  0;
-			pop[ 0 ].values[ 24 ] =   0; pop[ 0 ].values[ 25 ] =  0;
-			pop[ 0 ].values[ 26 ] =   0; pop[ 0 ].values[ 27 ] =  0;
-			pop[ 0 ].values[ 28 ] =   0; pop[ 0 ].values[ 29 ] =  0;
-			pop[ 0 ].values[ 30 ] =   0; pop[ 0 ].values[ 31 ] =  0;
-
-			for ( int i = 0 ; i < FAULT_NUM ; i++ )
-			{
-				faults[ i ].x = 2;
-				faults[ i ].y = 1;
-				faults[ i ].value = 2;
-			}
-		}
 		else if ( c == 'r' || iteration == TEST_LOOP )
 		{
 			for ( int i = 0 ; i < POP_SIZE ; i++ )
@@ -695,6 +669,33 @@ void evolve( Individual *pop, Parasite *para_pop )
 			}
 			iteration = 0;
 			test_run++;
+			fault = 0;
+		}
+		else if ( c == 'd' || (FAULT_INJECTION > 0 && !STICKY && iteration == 2) )
+		{
+			pop[ 0 ].values[ 0 ]  =  52; pop[ 0 ].values[ 1 ]  = 32;
+			pop[ 0 ].values[ 2 ]  = 108; pop[ 0 ].values[ 3 ]  = 32;
+			pop[ 0 ].values[ 4 ]  =  52; pop[ 0 ].values[ 5 ]  = 32;
+			pop[ 0 ].values[ 6 ]  = 108; pop[ 0 ].values[ 7 ]  = 32;
+			pop[ 0 ].values[ 8 ]  =   0; pop[ 0 ].values[ 9 ]  =  0;
+			pop[ 0 ].values[ 10 ] =  52; pop[ 0 ].values[ 11 ] = 32;
+			pop[ 0 ].values[ 12 ] = 108; pop[ 0 ].values[ 13 ] = 32;
+			pop[ 0 ].values[ 14 ] =   0; pop[ 0 ].values[ 15 ] =  0;
+			pop[ 0 ].values[ 16 ] =   0; pop[ 0 ].values[ 17 ] =  0;
+			pop[ 0 ].values[ 18 ] =  44; pop[ 0 ].values[ 19 ] = 32;
+			pop[ 0 ].values[ 20 ] =   0; pop[ 0 ].values[ 21 ] =  0;
+			pop[ 0 ].values[ 22 ] =   0; pop[ 0 ].values[ 23 ] =  0;
+			pop[ 0 ].values[ 24 ] =   0; pop[ 0 ].values[ 25 ] =  0;
+			pop[ 0 ].values[ 26 ] =   0; pop[ 0 ].values[ 27 ] =  0;
+			pop[ 0 ].values[ 28 ] =   0; pop[ 0 ].values[ 29 ] =  0;
+			pop[ 0 ].values[ 30 ] =   0; pop[ 0 ].values[ 31 ] =  0;
+
+			for ( int i = 0 ; i < FAULT_NUM ; i++ )
+			{
+				faults[ i ].x = 2;
+				faults[ i ].y = 1;
+				faults[ i ].value = 2;
+			}
 		}
 		else if ( c == KEY_LEFT && add_weight > 0 )
 		{

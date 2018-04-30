@@ -9,7 +9,7 @@
 
 #define TEST_SIZE 30
 #define TEST_LOOP 15000
-#define FAULT_INJECTION 1000
+#define FAULT_INJECTION 500
 #define POP_SIZE 50
 #define MUTATION 3.0f
 #define SIZE_WEIGHT 0
@@ -17,7 +17,7 @@
 #define ELITISM 1
 #define FITNESS_WEIGHT 10
 #define COEVOLVE 0
-#define STICKY 0
+#define STICKY 1
 #define LOG 0
 #define PROB_SKEW 0.0f //between 0 or 1, 1 is linear
 #define VIRULENCE 1.0f
