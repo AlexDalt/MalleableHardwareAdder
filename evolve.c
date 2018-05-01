@@ -689,6 +689,8 @@ void evolve( Individual *pop, Parasite *para_pop )
 			iteration = 0;
 			test_run++;
 			fault = 0;
+			add_weight = 10;
+			sub_weight = 0;
 		}
 		else if ( c == 'd' || ((FAULT_INJECTION > 0 || WEIGHT_TEST > 0 ) && !STICKY && iteration == 2) )
 		{
