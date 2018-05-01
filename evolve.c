@@ -58,6 +58,8 @@ int full_test( Individual *ind )
 {
 	FPGA fpga = ind->fpga;
 	int score = 0;
+	int add_fit = 0;
+	int sub_fit = 0;
 
 	for ( int i = 0 ; i < pow(2,FPGA_WIDTH) ; i++ )
 	{
@@ -75,8 +77,6 @@ int full_test( Individual *ind )
 			fpga.input[ j * 2 + 1 ] = ( v2 >> (FPGA_WIDTH/2 - j - 1) ) & 1;
 		}
 
-		int add_fit = 0;
-		int sub_fit = 0;
 		fpga.control = 0;
 		evaluate_fpga( &fpga );
 
@@ -99,8 +99,12 @@ int full_test( Individual *ind )
 			}
 		}
 
-		score += add_weight * add_fit + sub_weight * sub_fit;
 	}
+
+	score = add_weight * add_fit + sub_weight * sub_fit;
+
+	ind->add_score = add_fit;
+	ind->sub_score = sub_fit;
 
 	return score/(add_weight + sub_weight);
 }
@@ -498,12 +502,16 @@ void evolve( Individual *pop, Parasite *para_pop )
 	sub_weight = 0;
 
 	int avg_mean[ TEST_LOOP ];
+	int avg_add[ TEST_LOOP ];
+	int avg_sub[ TEST_LOOP ];
 	int avg_div[ TEST_LOOP ];
 	int avg_best[ TEST_LOOP ];
 
 	for ( int i = 0 ; i < TEST_LOOP ; i++ )
 	{
 		avg_mean[ i ] = 0;
+		avg_add[ i ] = 0;
+		avg_sub[ i ] = 0;
 		avg_best[ i ] = 0;
 		avg_div[ i ] = 0;
 	}
@@ -538,6 +546,8 @@ void evolve( Individual *pop, Parasite *para_pop )
 	while ( test_run < TEST_SIZE )
 	{
 		int mean_fit = 0;
+		int mean_add_fit = 0;
+		int mean_sub_fit = 0;
 		int mean_size = 0;
 		int mean_div = 0;
 		int mean_para_fit = 0;
@@ -561,6 +571,8 @@ void evolve( Individual *pop, Parasite *para_pop )
 			mean_size += pop[ i ].eval[ 1 ];
 			mean_div += pop[ i ].eval[ 2 ];
 			mean_para_fit += para_pop[ i ].score;
+			mean_add_fit += pop[ i ].add_score;
+			mean_sub_fit += pop[ i ].sub_score;
 
 			if ( COEVOLVE && ELITISM )
 			{
@@ -584,12 +596,15 @@ void evolve( Individual *pop, Parasite *para_pop )
 		mean_size = mean_size/POP_SIZE;
 		mean_div = mean_div/POP_SIZE;
 		mean_para_fit = mean_para_fit/POP_SIZE;
+		mean_add_fit = mean_add_fit/POP_SIZE;
+		mean_sub_fit = mean_sub_fit/POP_SIZE;
 
 		int test = full_test( &most_fit );
 
 		if ( COEVOLVE )
 		{
 			mean_fit = 0;
+
 			for ( int j = 0 ; j < POP_SIZE ; j++ )
 			{
 				mean_fit += full_test( &pop[ j ] );
@@ -607,6 +622,10 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 		avg_mean[ iteration ] = avg_mean[ iteration ] * test_run + mean_fit;
 		avg_mean[ iteration ] = avg_mean[ iteration ] / (test_run + 1);
+		avg_add[ iteration ] = avg_add[ iteration ] * test_run + mean_add_fit;
+		avg_add[ iteration ] = avg_add[ iteration ] / (test_run + 1);
+		avg_sub[ iteration ] = avg_sub[ iteration ] * test_run + mean_sub_fit;
+		avg_sub[ iteration ] = avg_sub[ iteration ] / (test_run + 1);
 		avg_best[ iteration ] = avg_best[ iteration ] * test_run + test;
 		avg_best[ iteration ] = avg_best[ iteration ] / (test_run + 1);
 		avg_div[ iteration ] = avg_div[ iteration ] * test_run + mean_div;
@@ -671,7 +690,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 			test_run++;
 			fault = 0;
 		}
-		else if ( c == 'd' || (FAULT_INJECTION > 0 && !STICKY && iteration == 2) )
+		else if ( c == 'd' || ((FAULT_INJECTION > 0 || WEIGHT_TEST > 0 ) && !STICKY && iteration == 2) )
 		{
 			pop[ 0 ].values[ 0 ]  =  52; pop[ 0 ].values[ 1 ]  = 32;
 			pop[ 0 ].values[ 2 ]  = 108; pop[ 0 ].values[ 3 ]  = 32;
@@ -697,7 +716,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 				faults[ i ].value = 2;
 			}
 		}
-		else if ( c == KEY_LEFT && add_weight > 0 )
+		else if ( (c == KEY_LEFT || (WEIGHT_TEST > 0 && iteration % WEIGHT_TEST == 0)) && add_weight > 0)
 		{
 			add_weight--;
 			sub_weight++;
@@ -718,7 +737,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 	{
 		for ( int i = 0 ; i < TEST_LOOP ; i++ )
 		{
-			fprintf( fp1, "%d    %d    %d	%d\n", i, avg_mean[ i ], avg_best[ i ], avg_div[ i ] );
+			fprintf( fp1, "%d    %d    %d	%d	%d	%d\n", i, avg_mean[ i ], avg_best[ i ], avg_div[ i ], avg_add[ i ], avg_sub[ i ] );
 		}
 		fclose( fp1 );
 	}
