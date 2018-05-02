@@ -1,0 +1,9 @@
+set terminal png
+set key off
+set output "graph.png"
+set title "Landscape Ruggedness As Mutation Rate Increases"
+set xlabel "Mutation Rate (M)"
+set ylabel "Ruggedness p(M)"
+set yrange [0:1]
+set xtics 1
+plot "ruggedness.dat" using 1:2 smooth sbezier

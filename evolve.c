@@ -324,7 +324,7 @@ float ind_prob( int position )
 	return a * pow( position, 2 ) + b * position + 1;
 }
 
-void new_pop( Individual *pop, Parasite *para_pop )
+void new_pop( Individual *pop, Parasite *para_pop, int *x, int *y, int iteration )
 {
 	int random;
 	int total_score = 0;
@@ -380,6 +380,11 @@ void new_pop( Individual *pop, Parasite *para_pop )
 			}
 
 			new_pop[ i ] = pop[ index ];
+		}
+
+		if ( RUGGEDNESS )
+		{
+			x[ iteration * 50 + i ] = pop[ index ].eval[ 0 ];
 		}
 
 		if ( COEVOLVE )
@@ -462,6 +467,11 @@ void new_pop( Individual *pop, Parasite *para_pop )
 			}
 		}
 
+		if ( RUGGEDNESS )
+		{
+			y[ iteration * 50 + i ] = full_test( &new_pop[ i ] );
+		}
+
 		if ( COEVOLVE )
 		{
 			for ( int j = 0 ; j < 16 ; j++ )
@@ -507,6 +517,9 @@ void evolve( Individual *pop, Parasite *para_pop )
 	int avg_div[ TEST_LOOP ];
 	int avg_best[ TEST_LOOP ];
 
+	int x[ 12000 ];
+	int y[ 12000 ];
+
 	for ( int i = 0 ; i < TEST_LOOP ; i++ )
 	{
 		avg_mean[ i ] = 0;
@@ -543,7 +556,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 	clock_t begin = clock();
 
-	while ( test_run < TEST_SIZE )
+	while ( test_run < TEST_SIZE && (!RUGGEDNESS || iteration < 240 ) )
 	{
 		int mean_fit = 0;
 		int mean_add_fit = 0;
@@ -633,7 +646,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 		iteration++;
 
-		new_pop( pop, para_pop );
+		new_pop( pop, para_pop, x, y, iteration );
 
 		if ( ELITISM )
 		{
@@ -744,10 +757,37 @@ void evolve( Individual *pop, Parasite *para_pop )
 		fclose( fp1 );
 	}
 
+	int cov = 0;
+	int var = 0;
+	int mean_x = 0;
+	int mean_y = 0;
+
+	if ( RUGGEDNESS )
+	{
+
+		for ( int i = 0 ; i < 12000 ; i++ )
+		{
+			mean_x += x[ i ];
+			mean_y += y[ i ];
+		}
+
+		mean_x = mean_x/12000;
+		mean_y = mean_y/12000;
+
+		for ( int i = 0 ; i < 12000 ; i++ )
+		{
+			cov += (x[ i ] - mean_x) * (y[ i ] - mean_y);
+			var += (x[ i ] - mean_x) * (x[ i ] - mean_x);
+		}
+
+		cov = cov/12000;
+		var = var/12000;
+	}
+
 	FILE *fp2 = fopen( "summary.txt", "a" );
 	if ( fp2 != NULL )
 	{
-		fprintf( fp2, "Number of perfect runs %d/%d, average time %f, average best case end fitness %d\n", perfect_run, TEST_SIZE, execution_time, avg_best[ TEST_LOOP - 1] );
+		fprintf( fp2, "Number of perfect runs %d/%d, average time %f, average best case end fitness %d, cov %d, var %d\n", perfect_run, TEST_SIZE, execution_time, avg_best[ TEST_LOOP - 1], cov, var );
 		fclose( fp2 );
 	}
 }

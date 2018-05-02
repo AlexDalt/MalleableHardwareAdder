@@ -6,5 +6,6 @@ set xlabel "Generation"
 set ylabel "Accuracy"
 set xrange [0:15000]
 set yrange [0:50]
-plot "test.dat" using 2 title "Mean Accuracy" with lines,\
-"test.dat" using 3 title "Best Case Accuracy" with lines
+plot "test.dat" using 3 title "Best Case Accuracy" with lines,\
+"test.dat" using 5 title "Mean ADD Accuracy" with lines,\
+"test.dat" using 6 title "Mean SUB Accuracy" with lines
