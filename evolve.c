@@ -517,6 +517,8 @@ void evolve( Individual *pop, Parasite *para_pop )
 	int avg_div[ TEST_LOOP ];
 	int avg_best[ TEST_LOOP ];
 
+	int final_scores[ TEST_SIZE ];
+
 	int x[ 12000 ];
 	int y[ 12000 ];
 
@@ -699,6 +701,7 @@ void evolve( Individual *pop, Parasite *para_pop )
 			{
 				perfect_run++;
 			}
+			final_scores[ test_run ] = test;
 			iteration = 0;
 			test_run++;
 			fault = 0;
@@ -759,16 +762,16 @@ void evolve( Individual *pop, Parasite *para_pop )
 
 	int cov = 0;
 	int var = 0;
-	int mean_x = 0;
-	int mean_y = 0;
+	float mean_x = 0;
+	float mean_y = 0;
 
 	if ( RUGGEDNESS )
 	{
 
 		for ( int i = 0 ; i < 12000 ; i++ )
 		{
-			mean_x += x[ i ];
-			mean_y += y[ i ];
+			mean_x += (float)x[ i ];
+			mean_y += (float)y[ i ];
 		}
 
 		mean_x = mean_x/12000;
@@ -783,12 +786,36 @@ void evolve( Individual *pop, Parasite *para_pop )
 		cov = cov/12000;
 		var = var/12000;
 	}
+	else 
+	{
+		for ( int i = 0 ; i < TEST_SIZE ; i++ )
+		{
+			mean_x += final_scores[ i ];
+		}
+		mean_x = mean_x/TEST_SIZE;
+
+		for ( int i = 0 ; i < TEST_SIZE ; i++ )
+		{
+			var += (final_scores[ i ] - mean_x) * (final_scores[ i ] - mean_x);
+		}
+		var = var/(TEST_SIZE-1);
+	}
 
 	FILE *fp2 = fopen( "summary.txt", "a" );
 	if ( fp2 != NULL )
 	{
 		fprintf( fp2, "Number of perfect runs %d/%d, average time %f, average best case end fitness %d, cov %d, var %d\n", perfect_run, TEST_SIZE, execution_time, avg_best[ TEST_LOOP - 1], cov, var );
 		fclose( fp2 );
+	}
+
+	FILE *fp3 = fopen( "final_scores.dat", "a" );
+	if ( fp3 != NULL )
+	{
+		for ( int i = 0 ; i < TEST_SIZE ; i++ )
+		{
+			fprintf( fp3, "%d\n", final_scores[ i ] );
+		}
+		fclose( fp3 );
 	}
 }
 

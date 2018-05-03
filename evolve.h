@@ -7,9 +7,9 @@
 #include <time.h>
 #include "simulator.h"
 
-#define TEST_SIZE 15
+#define TEST_SIZE 30
 #define TEST_LOOP 15000
-#define WEIGHT_TEST 500
+#define WEIGHT_TEST 0
 #define FAULT_INJECTION 0
 #define POP_SIZE 50
 #define MUTATION 3.0f

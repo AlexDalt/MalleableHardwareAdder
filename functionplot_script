@@ -1,0 +1,13 @@
+set terminal png
+set output "graph.png"
+set key bottom
+a(x) = x + 1
+b(x) = x**2/100 + x/2 + 1
+c(x) = x**2/50 + 1
+set title "Selection Pressure"
+set xlabel "Ranking"
+set ylabel "Selection Score"
+set xrange [0:50]
+plot a(x) title "skew = 1 (linear)" with lines,\
+b(x) title "skew = 0.5" with lines,\
+c(x) title "skew = 0" with lines
