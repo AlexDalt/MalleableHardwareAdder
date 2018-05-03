@@ -1,0 +1,13 @@
+set terminal png
+set output "graph.png"
+unset key
+set title "Final Accuracy For Each Evolutionary Run"
+set xlabel "Accuracy"
+set ylabel "Frequency"
+set style data histogram
+set style histogram rows
+set style fill solid border -1
+set boxwidth 0.8
+set xrange [41:49]
+set yrange [0:10]
+plot "final_scores.dat" using 1
